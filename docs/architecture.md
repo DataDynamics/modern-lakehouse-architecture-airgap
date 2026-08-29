@@ -18,6 +18,9 @@
 | Data Federation | Starburst Trino |
 | Consumption | Spotfire, Cloudera AI |
 
+각 솔루션이 이 아키텍처 안에서 담당하는 범위와 역할 경계는 [solutions.md](solutions.md)에
+따로 정리했습니다.
+
 ---
 
 ## Layer 설명
