@@ -10,7 +10,7 @@
 - [구성](#구성)
 - [아키텍처 개요](#아키텍처-개요)
 - [다이어그램 재생성](#다이어그램-재생성)
-  - [PNG 변환](#png-변환)
+  - [PNG 렌더러](#png-렌더러)
 - [폰트](#폰트)
 - [용어집](#용어집)
   - [환경·구조](#환경구조)
@@ -22,7 +22,8 @@
 ```
 .
 ├── assets/
-│   └── lakehouse-architecture-lr.svg     다이어그램 (빌드 산출물)
+│   ├── lakehouse-architecture-lr.svg     다이어그램 SVG (빌드 산출물)
+│   └── lakehouse-architecture-lr.png     다이어그램 PNG (빌드 산출물)
 ├── docs/
 │   ├── architecture.md                   Layer별 설명과 경로 설계 근거
 │   ├── solutions.md                      솔루션별 역할과 담당 범위
@@ -54,32 +55,58 @@
 
 ## 다이어그램 재생성
 
-Python 3.10 이상이 필요하며 외부 의존성은 없습니다.
+Python 3.10 이상이 필요합니다. SVG 생성 자체에는 외부 의존성이 없고, PNG 래스터화에만
+시스템에 설치된 렌더러를 사용합니다.
 
 ```bash
 python scripts/generate_architecture_svg.py
 ```
 
-기본 출력 경로는 `assets/lakehouse-architecture-lr.svg` 입니다. `-o` 옵션으로 변경할 수
-있습니다.
+SVG와 PNG가 항상 함께 생성됩니다.
+
+```
+assets/lakehouse-architecture-lr.svg    벡터 (문서 삽입 · 확대)
+assets/lakehouse-architecture-lr.png    래스터 4360 x 2300 (발표자료 · 이슈 첨부)
+```
+
+| 옵션 | 설명 |
+|---|---|
+| `-o`, `--output` | SVG 출력 경로 (기본 `assets/lakehouse-architecture-lr.svg`) |
+| `--png` | PNG 출력 경로 (기본: SVG와 같은 이름의 `.png`) |
+| `--png-width` | PNG 가로 픽셀 (기본 4360 = 캔버스 폭의 2배) |
+| `--no-png` | PNG 없이 SVG만 생성 |
 
 ```bash
-python scripts/generate_architecture_svg.py -o /tmp/diagram.svg
+python scripts/generate_architecture_svg.py -o /tmp/diagram.svg --png-width 2180
 ```
 
 레이아웃, 문구, 색상은 스크립트 상단의 `BOXES`, `EDGES`, `PALETTE` 선언에 모여 있습니다.
-`assets/` 의 SVG는 빌드 산출물이므로 직접 편집하지 말고 스크립트를 수정한 뒤 재생성하십시오.
+`assets/` 의 SVG와 PNG는 빌드 산출물이므로 직접 편집하지 말고 스크립트를 수정한 뒤
+재생성하십시오.
 
-### PNG 변환
+### PNG 렌더러
+
+다음 순서로 탐색해 먼저 발견되는 것을 사용합니다.
+
+| 순위 | 렌더러 | 설치 |
+|---|---|---|
+| 1 | `rsvg-convert` | librsvg. 폐쇄망에서 가장 구하기 쉽습니다 |
+| 2 | `inkscape` | |
+| 3 | `chromium` / `chrome` | |
+| 4 | CairoSVG | `python -m pip install cairosvg` |
+| 5 | ImageMagick | `magick` 또는 `convert` |
+
+하나도 없으면 SVG는 생성한 뒤 PNG 단계에서 안내 메시지와 함께 종료 코드 1로 끝납니다.
+SVG만 필요하면 `--no-png` 를 사용하십시오.
+
+실행 파일이 `PATH` 에 없으면 `SVG_RENDERER` 환경 변수로 직접 지정할 수 있습니다.
 
 ```bash
-# rsvg-convert
-rsvg-convert -w 3640 assets/lakehouse-architecture-lr.svg -o diagram.png
-
-# Inkscape
-inkscape assets/lakehouse-architecture-lr.svg --export-type=png \
-         --export-width=3640 --export-filename=diagram.png
+SVG_RENDERER=/opt/chromium/chrome python scripts/generate_architecture_svg.py
 ```
+
+다이어그램에 한글이 포함되므로, **렌더러가 실행되는 환경에 한글 폰트가 설치되어 있어야**
+합니다. 폰트가 없으면 PNG에서 한글이 빈 사각형으로 표시됩니다.
 
 ## 폰트
 

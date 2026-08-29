@@ -241,12 +241,16 @@ URL은 폐쇄망 DNS에서 해석되지 않는 경우가 많습니다.
 ## 다이어그램 재생성
 
 ```bash
-python scripts/generate_architecture_svg.py -o assets/lakehouse-architecture-lr.svg
+python scripts/generate_architecture_svg.py
 ```
 
+SVG와 PNG(4360 x 2300)가 함께 생성됩니다. PNG 래스터화에는 시스템에 설치된 렌더러
+(rsvg-convert · Inkscape · Chromium · CairoSVG · ImageMagick 중 하나)를 사용하며,
+자세한 옵션은 [README](../README.md#png-렌더러)를 참고하십시오.
+
 레이아웃과 문구는 `scripts/generate_architecture_svg.py` 상단의 `BOXES`, `EDGES`,
-`PALETTE` 상수에 선언되어 있습니다. `assets/` 의 SVG는 빌드 산출물이므로, 수정이
-필요하면 SVG를 직접 편집하지 말고 스크립트를 고친 뒤 재생성하시기 바랍니다.
+`PALETTE` 상수에 선언되어 있습니다. `assets/` 의 SVG와 PNG는 빌드 산출물이므로, 수정이
+필요하면 직접 편집하지 말고 스크립트를 고친 뒤 재생성하시기 바랍니다.
 
 ---
 

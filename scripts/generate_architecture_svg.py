@@ -4,14 +4,26 @@
 The diagram is described declaratively below (PALETTE / BOXES / ARROWS) and
 rendered to a single self-contained SVG file with a white background.
 
+SVG 를 쓰고 나면 같은 이름의 PNG 도 함께 생성한다. 래스터화에는 시스템에 설치된
+렌더러(rsvg-convert, Inkscape, Chromium, CairoSVG, ImageMagick) 중 하나를 사용한다.
+
 Usage:
     python scripts/generate_architecture_svg.py
     python scripts/generate_architecture_svg.py -o assets/lakehouse-architecture-lr.svg
+    python scripts/generate_architecture_svg.py --png-width 4360
+    python scripts/generate_architecture_svg.py --no-png
 """
 
 from __future__ import annotations
 
 import argparse
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -536,14 +548,184 @@ def build() -> str:
     return "\n".join(parts) + "\n"
 
 
+# --------------------------------------------------------------------------
+# PNG rasterisation
+# --------------------------------------------------------------------------
+
+PNG_SCALE = 2  # PNG 기본 폭 = CANVAS_W x PNG_SCALE
+
+
+def _which(*names: str) -> str | None:
+    """PATH 에서 첫 번째로 발견되는 실행 파일. 환경 변수 지정도 함께 확인한다."""
+    for env in ("SVG_RENDERER", "CHROME_BIN", "CHROMIUM_BIN"):
+        cand = os.environ.get(env)
+        if cand and Path(cand).is_file() and os.access(cand, os.X_OK):
+            if env == "SVG_RENDERER" or Path(cand).name in names:
+                return cand
+    for name in names:
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
+# Headless Chromium 은 창 높이에서 브라우저 UI 몫을 빼고 뷰포트를 잡는다.
+# 캔버스가 잘리지 않도록 넉넉히 키워 렌더한 뒤 정확한 높이로 잘라낸다.
+CHROME_VIEWPORT_PAD = 400
+
+
+def _crop_png_rows(path: Path, keep: int) -> None:
+    """PNG 의 위쪽 keep 행만 남기고 다시 쓴다 (표준 라이브러리만 사용)."""
+    raw = path.read_bytes()
+    pos, idat = 8, b""
+    while pos < len(raw):
+        ln = struct.unpack(">I", raw[pos:pos + 4])[0]
+        typ, data = raw[pos + 4:pos + 8], raw[pos + 8:pos + 8 + ln]
+        if typ == b"IHDR":
+            w, h, depth, ctype = struct.unpack(">IIBB", data[:10])
+            rest = data[10:]
+        elif typ == b"IDAT":
+            idat += data
+        pos += 12 + ln
+    if depth != 8 or ctype not in (0, 2, 4, 6) or keep >= h:
+        return
+    bpp = {0: 1, 2: 3, 4: 2, 6: 4}[ctype]
+    buf, stride = zlib.decompress(idat), w * bpp
+    prev, rows, o = bytearray(stride), [], 0
+    for _ in range(keep):
+        f = buf[o]
+        line = bytearray(buf[o + 1:o + 1 + stride])
+        o += 1 + stride
+        if f:
+            for i in range(stride):
+                a = line[i - bpp] if i >= bpp else 0
+                b = prev[i]
+                c = prev[i - bpp] if i >= bpp else 0
+                if f == 1:
+                    line[i] = (line[i] + a) & 255
+                elif f == 2:
+                    line[i] = (line[i] + b) & 255
+                elif f == 3:
+                    line[i] = (line[i] + (a + b) // 2) & 255
+                else:
+                    p = a + b - c
+                    pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                    line[i] = (line[i] + (a if pa <= pb and pa <= pc
+                                          else b if pb <= pc else c)) & 255
+        rows.append(bytes(line))
+        prev = line
+
+    def chunk(typ: bytes, data: bytes) -> bytes:
+        return (struct.pack(">I", len(data)) + typ + data
+                + struct.pack(">I", zlib.crc32(typ + data) & 0xFFFFFFFF))
+
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBB", w, keep, depth, ctype) + rest)
+        + chunk(b"IDAT", zlib.compress(
+            b"".join(b"\x00" + r for r in rows), 9))
+        + chunk(b"IEND", b""))
+
+
+def _run(cmd: list[str]) -> None:
+    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL,
+                   stderr=subprocess.DEVNULL)
+
+
+def render_png(svg: Path, png: Path, width: int) -> str:
+    """SVG 를 PNG 로 래스터화하고 사용한 렌더러 이름을 반환한다.
+
+    설치된 렌더러가 하나도 없으면 RuntimeError 를 발생시킨다.
+    """
+    height = round(width * CANVAS_H / CANVAS_W)
+    svg, png = svg.resolve(), png.resolve()
+
+    if (exe := _which("rsvg-convert")):
+        _run([exe, "-w", str(width), "-h", str(height),
+              "-b", BACKGROUND, str(svg), "-o", str(png)])
+        return "rsvg-convert"
+
+    if (exe := _which("inkscape")):
+        _run([exe, str(svg), "--export-type=png",
+              f"--export-width={width}", f"--export-filename={png}"])
+        return "inkscape"
+
+    if (exe := _which("chromium", "chromium-browser", "chrome",
+                      "google-chrome", "google-chrome-stable")):
+        # SVG 를 단독 문서로 열면 body 기본 여백 때문에 하단이 잘린다.
+        # 여백 0 인 HTML 에 인라인으로 넣어 캔버스 크기와 정확히 일치시킨다.
+        with tempfile.TemporaryDirectory() as td:
+            page = Path(td) / "page.html"
+            page.write_text(
+                '<!doctype html><meta charset="utf-8">'
+                "<style>html,body{margin:0;padding:0;overflow:hidden;"
+                f"background:{BACKGROUND}}}"
+                f"svg{{display:block;width:{CANVAS_W}px;height:{CANVAS_H}px}}"
+                "</style>" + svg.read_text(encoding="utf-8"),
+                encoding="utf-8")
+            scale = width / CANVAS_W
+            _run([exe, "--headless", "--disable-gpu", "--no-sandbox",
+                  "--hide-scrollbars",
+                  f"--default-background-color={BACKGROUND[1:]}FF",
+                  f"--window-size={CANVAS_W},{CANVAS_H + CHROME_VIEWPORT_PAD}",
+                  f"--force-device-scale-factor={scale:.4f}",
+                  "--virtual-time-budget=3000",
+                  f"--screenshot={png}", page.as_uri()])
+        _crop_png_rows(png, round(CANVAS_H * scale))
+        return "chromium"
+
+    try:
+        import cairosvg  # type: ignore
+    except ImportError:
+        pass
+    else:
+        cairosvg.svg2png(url=str(svg), write_to=str(png),
+                         output_width=width, output_height=height,
+                         background_color=BACKGROUND)
+        return "cairosvg"
+
+    if (exe := _which("magick", "convert")):
+        _run([exe, "-background", BACKGROUND, "-density", "192",
+              str(svg), "-resize", f"{width}x", str(png)])
+        return "imagemagick"
+
+    raise RuntimeError(
+        "PNG 를 만들 렌더러를 찾지 못했습니다. 다음 중 하나를 설치하십시오.\n"
+        "  rsvg-convert (librsvg)  |  inkscape  |  chromium  |  "
+        "python -m pip install cairosvg  |  imagemagick\n"
+        "설치된 실행 파일 경로를 SVG_RENDERER 환경 변수로 직접 지정할 수도 있습니다.\n"
+        "PNG 없이 SVG 만 생성하려면 --no-png 를 사용하십시오.")
+
+
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--output", type=Path,
-                    default=Path("assets/lakehouse-architecture-lr.svg"))
+                    default=Path("assets/lakehouse-architecture-lr.svg"),
+                    help="SVG 출력 경로 (기본: assets/lakehouse-architecture-lr.svg)")
+    ap.add_argument("--png", type=Path, default=None,
+                    help="PNG 출력 경로 (기본: SVG 와 같은 이름의 .png)")
+    ap.add_argument("--png-width", type=int, default=CANVAS_W * PNG_SCALE,
+                    help=f"PNG 가로 픽셀 (기본: {CANVAS_W * PNG_SCALE})")
+    ap.add_argument("--no-png", action="store_true",
+                    help="PNG 를 생성하지 않고 SVG 만 만든다")
     args = ap.parse_args()
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(build(), encoding="utf-8")
     print(f"wrote {args.output}")
+
+    if args.no_png:
+        return
+    png = args.png or args.output.with_suffix(".png")
+    png.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        renderer = render_png(args.output, png, args.png_width)
+    except (RuntimeError, subprocess.CalledProcessError) as exc:
+        print(f"PNG 생성 실패: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+    height = round(args.png_width * CANVAS_H / CANVAS_W)
+    print(f"wrote {png} ({args.png_width}x{height}, {renderer})")
 
 
 if __name__ == "__main__":
