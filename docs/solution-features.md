@@ -378,12 +378,18 @@ SEP 는 문서상 "Trino 의 상용 배포판(the commercial distribution of Tri
 | Data product AI agent-based enrichment | 에이전트 기반 데이터 상품 보강 | ○ |
 | Guardrails | AI 기능 안전장치 | ○ |
 
-> **폐쇄망 적용 시 확인 필요** 문서가 명시하는 model providers 는 AWS Bedrock, OpenAI,
-> Google Gemini Enterprise Agent Platform, Azure OpenAI, Gemini API 로 모두 외부 SaaS
-> 입니다. 폐쇄망에서는 이들 중 어느 것도 호출할 수 없으므로, **내부 모델 엔드포인트
-> (Cloudera AI Inference Service 등)를 model provider 로 등록할 수 있는지**가 AI 기능
-> 사용 가능 여부를 좌우합니다. 반입 버전 문서로 사내 호스팅 엔드포인트 지원 여부를
-> 먼저 확인하시기 바랍니다.
+> **폐쇄망 지원 — 확인 완료** 모델 통합 방식은 Amazon Bedrock, **OpenAI & OpenAI API
+> Compatible**, Google Gemini Enterprise Agent Platform 세 가지이며, 문서는 "compatible
+> APIs from these supported providers, whether these external models are deployed
+> **on-premises** or in the cloud" 로 온프레미스 배포를 명시합니다. 사내 모델을 쓰려면
+> 제공자로 OpenAI 를 선택하고 엔드포인트 URL 에 사내 주소를 입력하며, 해당 엔드포인트가
+> 요구하지 않으면 API 키는 생략할 수 있습니다. Cloudera AI Inference Service 가 OpenAI
+> 호환 엔드포인트를 제공하므로 전 구간이 내부에서 닫힙니다.
+>
+> 다만 `ai.agent.allowed-models-regex` 의 기본값이 검증된 모델군만 허용하므로, 고객 보유
+> 모델이 패턴에 걸리지 않으면 정규식을 직접 지정해야 하고 이 경우 Starburst 가 검증하지
+> 않은 모델이 됩니다. 연동은 되지만 **품질은 실측이 필요**합니다. 상세는
+> [agent-readiness-analysis.md](agent-readiness-analysis.md) 를 참고하십시오.
 
 ---
 
@@ -473,7 +479,7 @@ AI 기능의 내부 모델 공급자 후보**이기도 합니다. 위 Starburst 
 | # | 항목 | 내용 |
 |---|---|---|
 | 1 | CFM 프로세서 수 표기 | 저장소는 "400+", 확인한 Cloudera 문서 일부는 "300+". 반입 버전 기준으로 확정 필요 |
-| 2 | Starburst AI 의 model provider | 문서에 명시된 provider 가 전부 외부 SaaS. 내부 엔드포인트 등록 가능 여부가 폐쇄망 사용 가능성을 결정 |
+| 2 | Starburst AI 의 model provider | **해소됨.** OpenAI 호환 엔드포인트로 온프레미스 모델 사용 가능. 남은 확인 사항은 `ai.agent.allowed-models-regex` 기본 허용 목록과 고객 보유 모델의 품질 실측 |
 | 3 | Iceberg Catalog 이중화 | AIStor 가 Iceberg Catalog 인터페이스를 제공. 별도 REST Catalog 구현체와 그 PostgreSQL 의존성을 대체할 수 있는지 검토 |
 | 4 | CDE 버전 근거 | 확인한 버전 정보가 Cloud 판 문서 기준. 온프레미스 CDE 문서로 재확인 필요 |
 | 5 | MinIO 최소 구성 | 단일 서버 풀 최소 요건이 동일 사양 호스트 8대. 초기 도입 규모 산정에 반영 |
