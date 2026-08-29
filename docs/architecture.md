@@ -5,6 +5,28 @@
 
 ![Lakehouse Reference Architecture](../assets/lakehouse-architecture-lr.svg)
 
+## 목차
+
+- [구성 소프트웨어](#구성-소프트웨어)
+- [Layer 설명](#layer-설명)
+  - [1. Data Source Layer](#1-data-source-layer)
+  - [2. Ingestion Layer — Cloudera CFM](#2-ingestion-layer--cloudera-cfm)
+  - [3. Streaming Bus Layer — Cloudera CDP](#3-streaming-bus-layer--cloudera-cdp)
+  - [4. Storage Layer — MinIO + Iceberg](#4-storage-layer--minio--iceberg)
+  - [5. Processing & Orchestration Layer — Cloudera CDE](#5-processing--orchestration-layer--cloudera-cde)
+  - [6. Data Federation Layer — Starburst Trino](#6-data-federation-layer--starburst-trino)
+  - [7. Consumption Layer](#7-consumption-layer)
+- [Layer 간 경로](#layer-간-경로)
+  - [조회 경로 선택 기준](#조회-경로-선택-기준)
+- [검토 시 확인할 사항](#검토-시-확인할-사항)
+- [다이어그램 재생성](#다이어그램-재생성)
+- [용어집](#용어집)
+  - [금융 업무·원천](#금융-업무원천)
+  - [데이터 수집·연동](#데이터-수집연동)
+  - [저장·테이블 포맷](#저장테이블-포맷)
+  - [처리·조회](#처리조회)
+  - [AI·검색](#ai검색)
+
 ---
 
 ## 구성 소프트웨어
@@ -193,3 +215,104 @@ python scripts/generate_architecture_svg.py -o assets/lakehouse-architecture-lr.
 레이아웃과 문구는 `scripts/generate_architecture_svg.py` 상단의 `BOXES`, `EDGES`,
 `PALETTE` 상수에 선언되어 있습니다. `assets/` 의 SVG는 빌드 산출물이므로, 수정이
 필요하면 SVG를 직접 편집하지 말고 스크립트를 고친 뒤 재생성하시기 바랍니다.
+
+---
+
+## 용어집
+
+이 문서에 등장하는 용어입니다.
+
+### 금융 업무·원천
+
+| 용어 | 설명 |
+|---|---|
+| 계정계 | 예금·여신 등 금융 거래를 실시간 처리하는 원장 시스템. 정합성과 가용성 요구가 가장 높습니다 |
+| 정보계 | 계정계 데이터를 분석 목적으로 재구성해 보관하는 시스템. 계정계에 부하를 주지 않고 조회하기 위한 계층입니다 |
+| 대기계 | 계정계 장애에 대비한 대기 시스템. 평상시 유휴 자원이므로 CDC나 페더레이션의 대상으로 활용하기 좋습니다 |
+| 대외계 | 금융결제원, 신용정보원 등 외부 기관과 규격화된 전문을 주고받는 시스템 |
+| 여·수신 원장 | 대출(여신)과 예금(수신)의 거래 기록 원본 |
+| VAN | Value Added Network. 카드 결제 승인 중계 사업자 |
+| PG | Payment Gateway. 온라인 결제 대행 사업자 |
+| 전문 | 금융 시스템 간 주고받는 고정 규격의 메시지 |
+| STT | Speech-to-Text. 콜센터 통화 음성을 텍스트로 변환한 결과 |
+| FDS | Fraud Detection System. 이상 거래 탐지 시스템 |
+| AML | Anti-Money Laundering. 자금세탁방지 |
+| STR | Suspicious Transaction Report. 의심거래보고 |
+| KRX | 한국거래소. 시세 데이터의 원천 |
+| 로그마이너 | Oracle의 리두 로그 분석 기능. CDC 구현에 쓰이나 운영 DB에 직접 적용하면 성능·감사 이슈가 발생합니다 |
+
+### 데이터 수집·연동
+
+| 용어 | 설명 |
+|---|---|
+| CDC | Change Data Capture. 원본 DB의 변경분만 추출해 전달하는 방식. 전체 재적재 없이 최신 상태를 유지합니다 |
+| JDBC | Java Database Connectivity. Java 기반 DB 접속 표준 API |
+| ODBC | Open Database Connectivity. 언어 중립적 DB 접속 표준 |
+| MQ | Message Queue. 시스템 간 비동기 메시지 전달 미들웨어 |
+| SFTP | SSH File Transfer Protocol. 암호화된 파일 전송 |
+| REST | HTTP 기반의 API 설계 방식 |
+| Back-pressure | 하류가 처리하지 못할 때 상류의 유입을 억제하는 흐름 제어. 큐 폭주와 데이터 유실을 방지합니다 |
+| Guaranteed Delivery | 장애가 발생해도 데이터가 유실되지 않도록 보장하는 전달 방식 |
+| Data Provenance | 데이터의 출처와 변형 이력을 건 단위로 기록하는 기능. 감독당국 소명과 내부 감사의 근거가 됩니다 |
+| Site-to-Site | NiFi 인스턴스 간 데이터를 전송하는 전용 프로토콜 |
+| 프로세서 | NiFi에서 하나의 처리 동작(수집·변환·라우팅 등)을 담당하는 구성 단위 |
+| 컨슈머 그룹 | Kafka에서 토픽을 나눠 읽는 소비자 묶음. 그룹이 다르면 같은 메시지를 각각 독립적으로 읽습니다 |
+| lag | 컨슈머가 최신 메시지보다 얼마나 뒤처져 있는지를 나타내는 지표 |
+| replication factor | Kafka에서 각 파티션의 복제본 수. 3이면 브로커 2대까지 장애를 견딥니다 |
+| partition | 토픽을 병렬 처리 단위로 나눈 것 |
+
+### 저장·테이블 포맷
+
+| 용어 | 설명 |
+|---|---|
+| medallion | 데이터를 Bronze → Silver → Gold 단계로 정제해 나가는 레이어링 패턴 |
+| Bronze | 원천 데이터를 가공 없이 그대로 적재하는 계층 |
+| Silver | 정제·중복제거·표준화를 마친 계층 |
+| Gold | 집계·마트·피처 등 소비 목적에 맞춰 가공한 계층 |
+| SCD | Slowly Changing Dimension. 시간에 따라 변하는 속성의 이력을 관리하는 기법 |
+| Iceberg Table | 오브젝트 스토리지 위에서 트랜잭션과 스키마 변경을 지원하는 테이블 포맷 |
+| Iceberg REST Catalog | Iceberg 테이블의 메타데이터를 REST 규격으로 제공하는 카탈로그. 엔진 교체·추가가 용이합니다 |
+| Hive Metastore | 하둡 생태계의 전통적 메타데이터 저장소. Thrift 의존성 때문에 이 아키텍처에서는 제거했습니다 |
+| Thrift | 언어 간 RPC 프레임워크. Hive Metastore의 통신 규약 |
+| snapshot | 특정 시점의 테이블 상태 기록. 시점 조회와 감사 재현의 근거가 됩니다 |
+| time-travel | 과거 스냅샷 시점의 데이터를 조회하는 기능 |
+| schema evolution | 기존 데이터를 다시 쓰지 않고 컬럼을 추가·변경하는 기능 |
+| MERGE | 대상 테이블에 신규는 삽입하고 기존은 갱신하는 SQL 연산 |
+| Compaction | 작은 파일을 병합해 조회 성능을 회복시키는 유지관리 작업 |
+| Snapshot Expiration | 오래된 스냅샷을 정리해 저장 공간을 회수하는 작업 |
+| `s3a://` | Hadoop 계열 엔진이 S3 호환 저장소에 접근할 때 쓰는 경로 스킴 |
+| path-style-access | `호스트/버킷/키` 형식으로 S3에 접근하는 방식. 폐쇄망 DNS에서 가상 호스트 스타일 URL이 해석되지 않는 경우가 많아 필요합니다 |
+
+### 처리·조회
+
+| 용어 | 설명 |
+|---|---|
+| DAG | Directed Acyclic Graph. 작업 간 의존 관계를 순환 없이 표현한 그래프. Airflow의 파이프라인 정의 단위 |
+| SLA | Service Level Agreement. 작업이 완료돼야 하는 기한 기준 |
+| Structured Streaming | Spark의 스트리밍 처리 방식. 마이크로배치 단위로 연속 데이터를 처리합니다 |
+| 마이크로배치 | 스트림을 짧은 시간 단위로 잘라 배치처럼 처리하는 방식. 이 주기가 실시간 적재 지연의 하한을 결정합니다 |
+| Coordinator | Trino에서 질의를 파싱·계획하고 워커에 분배하는 노드 |
+| Worker | Trino에서 실제 데이터를 읽고 연산하는 노드 |
+| Connector | Trino가 개별 데이터 소스에 접속하기 위한 플러그인 |
+| 페더레이션 | 데이터를 한곳에 모으지 않고, 여러 원천을 질의 시점에 통합 조회하는 방식 |
+| 리소스 그룹 | Trino에서 동시 실행 질의 수와 자원 사용량을 제한하는 통제 단위 |
+| 마스킹 | 민감 정보를 가리거나 대체해 조회 결과에 노출되지 않게 하는 기법 |
+| 행·열 수준 통제 | 사용자 권한에 따라 조회 가능한 행과 열을 제한하는 접근 제어 |
+| In-DB 모드 | 데이터를 BI 도구로 가져오지 않고 원천 DB에서 연산해 결과만 받는 방식 |
+
+### AI·검색
+
+| 용어 | 설명 |
+|---|---|
+| RAG | Retrieval-Augmented Generation. 질문과 관련된 문서를 검색해 근거로 제공한 뒤 답변을 생성하는 방식 |
+| 임베딩 | 텍스트를 의미가 반영된 숫자 벡터로 변환한 것. 유사도 검색의 기준이 됩니다 |
+| 청킹 | 긴 문서를 검색·임베딩에 적합한 크기로 나누는 작업 |
+| 파싱 | PDF·이미지 등에서 텍스트를 추출하는 단계. 파이프라인에서 비용이 가장 큰 구간입니다 |
+| NL-to-SQL | 자연어 질문을 SQL로 변환하는 기능 |
+| MCP | Model Context Protocol. AI 에이전트가 외부 도구·데이터에 접근하기 위한 개방형 규약 |
+| Vector Store | 임베딩 벡터를 저장하고 유사도 검색을 제공하는 저장소 |
+| PGVector | PostgreSQL에서 벡터 검색을 제공하는 확장 |
+| HNSW | Hierarchical Navigable Small World. 근사 최근접 이웃 검색에 널리 쓰이는 인덱스 구조 |
+| BM25 | 단어 빈도 기반의 전통적 문서 검색 랭킹 알고리즘 |
+| Nori | Elasticsearch의 한국어 형태소 분석기 |
+| RRF | Reciprocal Rank Fusion. 서로 다른 검색 결과의 순위를 결합하는 하이브리드 검색 기법 |

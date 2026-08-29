@@ -6,6 +6,25 @@
 목적이므로, 다이어그램에 표기되지 않은 기능은 다루지 않습니다. 제품이 제공하는 기능
 전체 목록은 [solution-features.md](solution-features.md)에 따로 정리했습니다.
 
+## 목차
+
+- [배치 요약](#배치-요약)
+- [Cloudera CFM — Layer 2, Ingestion](#cloudera-cfm--layer-2-ingestion)
+- [Cloudera CDP — Layer 3, Streaming Bus](#cloudera-cdp--layer-3-streaming-bus)
+- [MinIO AIStor — Layer 4, Storage](#minio-aistor--layer-4-storage)
+- [Cloudera CDE — Layer 5, Processing & Orchestration](#cloudera-cde--layer-5-processing--orchestration)
+- [Starburst Enterprise — Layer 6, Data Federation](#starburst-enterprise--layer-6-data-federation)
+- [Spotfire — Layer 7, Consumption](#spotfire--layer-7-consumption)
+- [Cloudera AI — Layer 7, Consumption](#cloudera-ai--layer-7-consumption)
+- [역할이 겹쳐 보이는 지점](#역할이-겹쳐-보이는-지점)
+- [폐쇄망 전제에서의 공통 사항](#폐쇄망-전제에서의-공통-사항)
+- [용어집](#용어집)
+  - [제품·구성요소](#제품구성요소)
+  - [데이터 흐름](#데이터-흐름)
+  - [저장](#저장)
+  - [조회·통제](#조회통제)
+  - [AI](#ai)
+
 ## 배치 요약
 
 | Layer | 솔루션 | 한 줄 역할 |
@@ -312,3 +331,92 @@ S3 직접 접근 경로에는 Starburst 의 마스킹이 적용되지 않습니�
 - S3 접근은 예외 없이 `path-style-access=true` 로 통일합니다
 - 제품 설치 미디어, 컨테이너 이미지, 라이브러리 의존성은 내부 레지스트리·미러를 통해
   공급해야 하며, 이 부분은 다이어그램의 범위 밖입니다
+
+---
+
+## 용어집
+
+이 문서에 등장하는 용어입니다. Layer별 상세 설명은
+[architecture.md](architecture.md), 제품이 제공하는 기능 목록은
+[solution-features.md](solution-features.md)를 참고하십시오.
+
+### 제품·구성요소
+
+| 용어 | 설명 |
+|---|---|
+| Cloudera CFM | Cloudera Flow Management. Apache NiFi 기반의 수집·흐름 관리 제품 |
+| Apache NiFi | GUI로 데이터 흐름을 설계하고 전달을 보증하는 데이터 통합 도구 |
+| Cloudera CDP | Cloudera Data Platform. 이 아키텍처에서는 Kafka 중심의 스트리밍 버스를 가리킵니다 |
+| Streams Messaging Manager (SMM) | Kafka의 토픽·컨슈머·지연을 관제하는 운영 도구 |
+| ZooKeeper Ensemble | 브로커 등록과 리더 선출을 담당하는 코디네이션 노드 묶음. 3 또는 5노드로 홀수 구성합니다 |
+| MinIO AIStor | MinIO의 상용 오브젝트 스토리지 제품. S3 API를 네이티브로 제공합니다 |
+| Cloudera CDE | Cloudera Data Engineering. Airflow와 Spark on Kubernetes를 제공합니다 |
+| Starburst Enterprise | 분산 SQL 질의 엔진 Trino의 상용 배포판 |
+| Spotfire | 시각화 기반 분석 플랫폼 |
+| Cloudera AI | 모델 학습·서빙과 AI 에이전트를 제공하는 제품 |
+| AI Workbench | Cloudera AI에서 모델 학습·서빙을 수행하는 작업 환경 |
+| Agent | 도구를 사용해 다단계 작업을 스스로 수행하는 AI 실행 단위 |
+
+### 데이터 흐름
+
+| 용어 | 설명 |
+|---|---|
+| CDC | Change Data Capture. 원본 DB의 변경분만 추출해 전달하는 방식 |
+| 배치 | 일정 주기로 데이터를 모아 한 번에 처리하는 방식 |
+| 스트리밍 | 발생하는 이벤트를 연속적으로 처리하는 방식 |
+| 마이크로배치 | 스트림을 짧은 시간 단위로 잘라 배치처럼 처리하는 방식 |
+| Structured Streaming | Spark의 스트리밍 처리 방식 |
+| Back-pressure | 하류가 처리하지 못할 때 상류 유입을 억제하는 흐름 제어 |
+| Guaranteed Delivery | 장애 시에도 데이터 유실을 막는 전달 보증 |
+| Data Provenance | 데이터의 출처와 변형 이력을 건 단위로 기록하는 기능 |
+| Site-to-Site | NiFi 인스턴스 간 전용 전송 프로토콜 |
+| 컨슈머 그룹 | Kafka에서 토픽을 나눠 읽는 소비자 묶음. CFM과 CDE는 그룹 ID를 분리해야 합니다 |
+| lag | 컨슈머가 최신 메시지보다 뒤처진 정도 |
+| 토픽 | Kafka에서 메시지를 분류해 담는 논리적 채널 |
+| replication factor | 파티션 복제본 수. 3이면 브로커 2대 장애까지 견딥니다 |
+| 홉 | 데이터가 거쳐 가는 중간 구간. 홉이 늘수록 지연이 증가합니다 |
+
+### 저장
+
+| 용어 | 설명 |
+|---|---|
+| medallion | Bronze → Silver → Gold로 단계적으로 정제하는 레이어링 패턴 |
+| Bronze · Silver · Gold | 각각 원천 그대로, 정제 완료, 소비용 가공 단계의 계층 |
+| SCD | Slowly Changing Dimension. 변하는 속성의 이력 관리 기법 |
+| Apache Iceberg | 오브젝트 스토리지 위의 테이블 포맷. 스냅샷과 스키마 변경을 지원합니다 |
+| Iceberg REST Catalog | Iceberg 메타데이터를 REST 규격으로 제공하는 카탈로그 |
+| snapshot · time-travel | 특정 시점의 테이블 상태 기록과, 그 시점으로 되돌려 조회하는 기능 |
+| MERGE · Compaction | 신규 삽입·기존 갱신을 함께 처리하는 연산과, 작은 파일을 병합하는 유지관리 작업 |
+| `s3a://` | Hadoop 계열 엔진의 S3 호환 저장소 접근 스킴 |
+| path-style-access | `호스트/버킷/키` 형식의 S3 접근 방식. 폐쇄망 DNS 환경에서 필요합니다 |
+| WORM | Write Once Read Many. 한 번 기록하면 변경·삭제할 수 없는 보존 방식 |
+
+### 조회·통제
+
+| 용어 | 설명 |
+|---|---|
+| 페더레이션 | 데이터를 모으지 않고 여러 원천을 질의 시점에 통합 조회하는 방식 |
+| Connector | Trino가 개별 데이터 소스에 접속하기 위한 플러그인 |
+| Coordinator · Worker | 질의를 계획·분배하는 노드와, 실제 연산을 수행하는 노드 |
+| 리소스 그룹 | 동시 실행 질의 수와 자원 사용량을 제한하는 통제 단위 |
+| 마스킹 | 민감 정보를 가리거나 대체해 조회 결과에 노출되지 않게 하는 기법 |
+| 행·열 수준 통제 | 권한에 따라 조회 가능한 행과 열을 제한하는 접근 제어 |
+| IAM | Identity and Access Management. 사용자·정책 기반 접근 통제 |
+| In-DB 모드 | BI 도구가 데이터를 가져오지 않고 원천에서 연산해 결과만 받는 방식 |
+| JDBC · ODBC | 각각 Java 기반, 언어 중립적 DB 접속 표준 |
+| S3 API 직접 접근 | Trino를 거치지 않고 오브젝트 스토리지에서 직접 읽는 경로. 마스킹이 적용되지 않습니다 |
+
+### AI
+
+| 용어 | 설명 |
+|---|---|
+| RAG | 관련 문서를 검색해 근거로 제공한 뒤 답변을 생성하는 방식 |
+| 임베딩 | 텍스트를 의미가 반영된 숫자 벡터로 변환한 것 |
+| NL-to-SQL | 자연어 질문을 SQL로 변환하는 기능 |
+| MCP | Model Context Protocol. AI 에이전트의 외부 도구·데이터 접근 규약 |
+| Vector Store | 임베딩 벡터를 저장하고 유사도 검색을 제공하는 저장소 |
+| PGVector · HNSW | PostgreSQL의 벡터 검색 확장과, 근사 최근접 이웃 검색 인덱스 구조 |
+| BM25 · Nori · RRF | 단어 빈도 기반 랭킹 알고리즘, 한국어 형태소 분석기, 서로 다른 검색 결과의 순위 결합 기법 |
+| 모델 서빙 | 학습된 모델을 호출 가능한 엔드포인트로 배포해 운영하는 것 |
+| 추론 엔드포인트 | 모델에 입력을 보내 결과를 받는 API 접점. 폐쇄망에서는 내부에 두어야 합니다 |
+| 비식별 처리 | 개인을 특정할 수 없도록 데이터를 가공하는 것 |
