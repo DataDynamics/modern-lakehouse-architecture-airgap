@@ -26,6 +26,7 @@
 │   └── lakehouse-architecture-lr.png     다이어그램 PNG (빌드 산출물)
 ├── docs/
 │   ├── architecture.md                   Layer별 설명과 경로 설계 근거
+│   ├── architecture-rationale.md         제안 아키텍처의 특징과 선택 근거
 │   ├── solutions.md                      솔루션별 역할과 담당 범위
 │   ├── solution-features.md              솔루션별 주요 기능 목록 (공식 문서 기준)
 │   ├── solution-runtimes.md              솔루션별 동작 환경과 배포 방식
@@ -49,6 +50,9 @@
 | 7 | Consumption | Spotfire, Cloudera AI, SQL Client, Notebook |
 | + | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환) + 고객 보유 모델 |
 | + | AI Agent | 고객 AI Agent — Starburst MCP 도구, 권한 위임, 감사 |
+
+제품 선택의 근거는 [docs/architecture-rationale.md](docs/architecture-rationale.md)에
+정리했습니다.
 
 상세 설명은 [docs/architecture.md](docs/architecture.md), 각 솔루션이 이 아키텍처에서
 담당하는 역할은 [docs/solutions.md](docs/solutions.md), 공식 문서에서 확인한 제품별 기능

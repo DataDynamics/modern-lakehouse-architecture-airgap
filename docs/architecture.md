@@ -45,8 +45,9 @@
 | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환 엔드포인트) + 고객 보유 모델 |
 | AI Agent | 고객 AI Agent (Starburst MCP 도구 · 권한 위임 · 감사) |
 
-각 솔루션이 이 아키텍처 안에서 담당하는 범위와 역할 경계는 [solutions.md](solutions.md)에
-따로 정리했습니다.
+각 솔루션이 이 아키텍처 안에서 담당하는 범위와 역할 경계는 [solutions.md](solutions.md)에,
+각 제품을 선택한 근거는 [architecture-rationale.md](architecture-rationale.md)에 따로
+정리했습니다.
 
 ---
 
