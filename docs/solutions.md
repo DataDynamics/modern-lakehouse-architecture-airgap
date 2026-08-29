@@ -3,7 +3,8 @@
 이 문서는 [lakehouse-architecture-lr.svg](../assets/lakehouse-architecture-lr.svg) 에
 그려진 범위에 한정해, 각 솔루션이 이 아키텍처 안에서 무엇을 담당하고 무엇을 담당하지
 않는지를 정리한 것입니다. 제품의 전체 기능 소개가 아니라 **이 그림에서의 역할 정의**가
-목적이므로, 다이어그램에 표기되지 않은 기능은 다루지 않습니다.
+목적이므로, 다이어그램에 표기되지 않은 기능은 다루지 않습니다. 제품이 제공하는 기능
+전체 목록은 [solution-features.md](solution-features.md)에 따로 정리했습니다.
 
 ## 배치 요약
 
