@@ -20,6 +20,50 @@
 > 문서에 명시된 버전·수치는 확인 시점(2026-08) 기준입니다. 폐쇄망 도입 시에는 실제
 > 반입할 릴리스의 문서로 재확인하시기 바랍니다.
 
+## 목차
+
+- [Cloudera CFM (Apache NiFi)](#cloudera-cfm-apache-nifi)
+  - [Flow Management](#flow-management)
+  - [Ease of Use](#ease-of-use)
+  - [Security](#security)
+  - [Extensible Architecture](#extensible-architecture)
+  - [Flexible Scaling Model](#flexible-scaling-model)
+  - [CFM 배포판이 추가로 제공하는 것](#cfm-배포판이-추가로-제공하는-것)
+- [Cloudera CDP — Streams Messaging](#cloudera-cdp--streams-messaging)
+  - [Streams Messaging Manager 주요 기능](#streams-messaging-manager-주요-기능)
+- [MinIO AIStor](#minio-aistor)
+  - [인터페이스](#인터페이스)
+  - [데이터 보호](#데이터-보호)
+  - [접근 제어와 운영](#접근-제어와-운영)
+  - [함께 제공되는 도구](#함께-제공되는-도구)
+- [Cloudera CDE (Data Engineering)](#cloudera-cde-data-engineering)
+  - [핵심 개념](#핵심-개념)
+  - [Spark](#spark)
+  - [Airflow](#airflow)
+  - [인터페이스](#인터페이스-1)
+- [Starburst Enterprise (SEP)](#starburst-enterprise-sep)
+  - [커넥터](#커넥터)
+  - [보안·접근 제어](#보안접근-제어)
+  - [성능](#성능)
+  - [운영·거버넌스](#운영거버넌스)
+  - [AI 기능](#ai-기능)
+- [Spotfire](#spotfire)
+- [Cloudera AI](#cloudera-ai)
+  - [AI Workbench](#ai-workbench)
+  - [Cloudera AI Inference Service](#cloudera-ai-inference-service)
+  - [AI Studio (Agent Studio)](#ai-studio-agent-studio)
+- [확인 과정에서 드러난 검토 항목](#확인-과정에서-드러난-검토-항목)
+- [출처](#출처)
+- [용어집](#용어집)
+  - [공통](#공통)
+  - [Cloudera CFM (NiFi)](#cloudera-cfm-nifi)
+  - [Cloudera CDP (Streams Messaging)](#cloudera-cdp-streams-messaging)
+  - [MinIO AIStor](#minio-aistor-1)
+  - [Cloudera CDE](#cloudera-cde)
+  - [Starburst Enterprise](#starburst-enterprise)
+  - [Spotfire](#spotfire-1)
+  - [Cloudera AI](#cloudera-ai-1)
+
 ---
 
 ## Cloudera CFM (Apache NiFi)
@@ -479,3 +523,162 @@ AI 기능의 내부 모델 공급자 후보**이기도 합니다. 위 Starburst 
 - https://docs.cloudera.com/machine-learning/cloud/product/topics/ml-product-overview.html
 - https://docs.cloudera.com/machine-learning/cloud/use-ai-studios/topics/ml-agent-studio-overview.html
 - https://docs.cloudera.com/machine-learning/cloud/ai-inference/ml-ai-inference.pdf
+
+---
+
+## 용어집
+
+이 문서에 등장하는 기능명과 용어입니다. 아키텍처 전반의 용어는
+[architecture.md](architecture.md)의 용어집을 참고하십시오.
+
+### 공통
+
+| 용어 | 설명 |
+|---|---|
+| 폐쇄망 (air-gapped) | 외부 인터넷과 분리된 망. 외부 SaaS 호출과 온라인 패키지 설치가 불가합니다 |
+| 오케스트레이션 | 여러 작업의 실행 순서·의존성·일정을 관리하는 것 |
+| 커넥터 | 특정 데이터 소스에 접속하기 위한 플러그인 |
+| pushdown | 필터·집계 연산을 원천 시스템에 위임해 전송량을 줄이는 최적화 |
+| 오토스케일링 | 부하에 따라 자원을 자동으로 늘리고 줄이는 것 |
+| 관측(observability) | 메트릭·로그·트레이스로 시스템 내부 상태를 파악하는 것 |
+| OpenTelemetry | 메트릭·로그·트레이스 수집의 벤더 중립 표준 |
+| 계보(lineage) | 데이터가 어디서 와서 어디로 갔는지의 이력 |
+| REST API | HTTP 기반으로 기능을 외부에 노출하는 인터페이스 |
+| CLI | Command Line Interface. 명령행 도구 |
+
+### Cloudera CFM (NiFi)
+
+| 용어 | 설명 |
+|---|---|
+| Guaranteed Delivery | write-ahead log와 content repository로 전달을 보증하는 방식 |
+| Back Pressure / Pressure Release | 큐 적체 시 상류 유입을 억제하고, 임계를 넘은 데이터를 해제하는 흐름 제어 |
+| Prioritized Queuing | 큐 안에서 처리 순서를 지정하는 기능 |
+| Flow Specific QoS | 흐름 구간별로 지연 대 처리량, 손실 허용도를 다르게 설정하는 것 |
+| Visual Command and Control | 동작 중인 흐름을 GUI에서 변경·중단·재구성하는 기능 |
+| Flow Templates | 흐름 구성을 템플릿으로 저장해 재사용하는 기능 |
+| Data Provenance | 데이터의 출처·변형·전달 이력을 건 단위로 기록하는 기능 |
+| Multi-tenant Authorization | 흐름 단위로 사용자·팀 권한을 분리하는 인가 방식 |
+| Classloader Isolation | 확장 간 라이브러리 의존성 충돌을 격리하는 구조 |
+| Site-to-Site | NiFi 인스턴스 간 전용 전송 프로토콜 |
+| NiFi Registry | 흐름 정의를 버전 관리하고 환경 간 승격하는 구성요소 |
+| 프로세서 | 수집·변환·라우팅 등 하나의 처리 동작을 담당하는 구성 단위 |
+| 2-way SSL | 서버와 클라이언트가 서로 인증서를 검증하는 상호 인증 방식 |
+
+### Cloudera CDP (Streams Messaging)
+
+| 용어 | 설명 |
+|---|---|
+| Streams Replication Manager (SRM) | Kafka 클러스터 간 토픽을 복제하는 구성요소 |
+| Schema Registry | 메시지 스키마를 등록·버전 관리해 생산자와 소비자의 호환성을 유지하는 저장소 |
+| Cruise Control | Kafka 파티션 배치를 재조정해 브로커 간 부하를 분산하는 도구 |
+| Kafka Connect | 코드 없이 외부 시스템과 Kafka를 연결하는 커넥터 프레임워크 |
+| Intelligence-based filtering | 프로듀서·브로커·토픽·컨슈머 중 하나를 선택하면 연관 엔티티만 표시하는 SMM 기능 |
+| Consumer lag | 컨슈머가 최신 메시지보다 뒤처진 메시지 수 |
+| Apache Atlas | 하둡 생태계의 메타데이터·계보 관리 도구 |
+| Apache Ranger | 하둡 생태계의 중앙 집중 접근 통제 도구 |
+
+### MinIO AIStor
+
+| 용어 | 설명 |
+|---|---|
+| S3 API | AWS S3의 오브젝트 접근 규격. AIStor가 네이티브로 제공합니다 |
+| S3 Express | 저지연 워크로드를 위한 S3 프로토콜 변형 |
+| AIStor Tables | Iceberg 테이블을 네이티브로 지원하는 AIStor 기능 |
+| OpenSharing | Delta Sharing 프로토콜 기반의 데이터 공유 기능 |
+| Erasure Coding | 데이터를 조각과 패리티로 분산 저장해 일부 디스크 장애를 견디는 보호 방식 |
+| Healing | 장애가 발생한 데이터 조각을 자동으로 복구하는 동작 |
+| Object Versioning | 같은 키의 오브젝트를 버전별로 보관하는 기능 |
+| Object Locking / WORM | 지정 기간 동안 오브젝트의 변경·삭제를 금지하는 보존 기능 |
+| Bucket Replication | 버킷 단위 복제. active-passive는 단방향, active-active는 양방향입니다 |
+| Server-Side Encryption (SSE) | 저장 시점에 서버가 데이터를 암호화하는 방식 |
+| KMS · KES | 암호화 키를 관리하는 서버와, MinIO의 키 관리 연동 서비스 |
+| OpenID Connect (OIDC) | OAuth 2.0 기반의 표준 인증 프로토콜 |
+| Lifecycle Management | 오브젝트를 자동 만료시키거나 다른 저장 계층으로 이동시키는 정책 |
+| Tiering | 접근 빈도가 낮은 데이터를 저렴한 저장 계층으로 옮기는 것 |
+| Bucket Notifications | 오브젝트 생성·삭제 등의 이벤트를 외부에 알리는 기능 |
+| RDMA | Remote Direct Memory Access. CPU를 거치지 않는 고속 네트워크 전송 |
+| DirectPV | 직접 연결 스토리지를 다루는 Kubernetes CSI 드라이버 |
+| CSI | Container Storage Interface. Kubernetes의 스토리지 연동 표준 |
+| Warp · Sidekick | S3 벤치마킹 도구와, 클라이언트 측 로드밸런서 |
+| 서버 풀 | AIStor에서 하나의 저장소를 이루는 호스트 묶음 단위 |
+| 멀티테넌시 | 하나의 시스템을 여러 조직이 격리된 상태로 나눠 쓰는 구성 |
+
+### Cloudera CDE
+
+| 용어 | 설명 |
+|---|---|
+| Virtual Cluster | CPU·메모리 범위가 정의된 개별 오토스케일링 클러스터 |
+| Job · Job run | 설정·리소스를 포함한 애플리케이션 코드와, 그 개별 실행 |
+| Resource | Python 파일, JAR, 의존성 등 작업이 참조하는 파일 모음 |
+| ACL | Access Control List. 사용자·그룹별 접근 권한 목록 |
+| Apache YuniKorn | Kubernetes용 자원 스케줄러. 서비스·클러스터 단위 오토스케일링에 사용됩니다 |
+| Spark dynamic allocation | 작업 부하에 따라 Executor 수를 늘리고 줄이는 Spark 기능 |
+| copy-on-write | 변경 시 해당 데이터 파일을 새로 쓰는 방식. 조회는 빠르고 쓰기는 무겁습니다 |
+| Spark History Server | 완료된 Spark 작업의 실행 이력을 조회하는 도구 |
+| DAG | 작업 의존 관계를 순환 없이 표현한 그래프. Airflow 파이프라인의 정의 단위 |
+| Operator | Airflow에서 하나의 작업 유형을 수행하는 구성 단위 |
+| CDEOperator · CDWOperator | 각각 CDE의 Spark 작업, CDW의 Hive 작업을 실행하는 Airflow Operator |
+
+### Starburst Enterprise
+
+| 용어 | 설명 |
+|---|---|
+| Trino | 여러 데이터 소스를 대상으로 하는 분산 SQL 질의 엔진. SEP는 그 상용 배포판입니다 |
+| Dynamic filtering | 조인 상대의 값을 이용해 스캔 대상을 실행 중에 줄이는 최적화 |
+| Cost-based optimizer (CBO) | 통계를 근거로 실행 계획을 선택하는 최적화기 |
+| Starburst Warp Speed | 자동 인덱싱·캐싱으로 조회를 가속하는 기능 |
+| Starburst Cached Views | 질의 결과를 미리 계산해 캐시해 두는 뷰 |
+| Table scan redirection | 원본 테이블 대신 캐시된 테이블을 읽도록 전환하는 기능 |
+| Fault-tolerant execution | 작업 실패 시 재시도로 장기 질의를 완주시키는 실행 방식 |
+| Resource groups | 동시 실행 질의 수와 자원 상한을 통제하는 단위 |
+| Session property managers | 세션 속성을 규칙에 따라 자동 적용하는 기능 |
+| Spill to disk | 메모리가 부족할 때 중간 결과를 디스크로 내보내는 처리 |
+| CTE reuse | 공통 테이블 식(WITH 절)의 결과를 재사용해 중복 연산을 없애는 최적화 |
+| Distributed sort | 여러 워커에 나눠 수행하는 정렬 |
+| Graceful shutdown | 처리 중인 질의를 마친 뒤 워커를 종료해 무중단 축소를 가능하게 하는 기능 |
+| Credential passthrough | 최종 사용자의 자격증명을 원천 시스템까지 전달하는 방식 |
+| User impersonation | 질의를 요청한 사용자 자격으로 원천에 접근하는 위임 방식 |
+| Starburst Insights | 클러스터 메트릭과 질의 이력을 보여주는 대시보드 |
+| Data products | 목적별로 정의·게시해 재사용하는 데이터 묶음 |
+| JMX | Java Management Extensions. JVM 메트릭 노출 표준 |
+| OpenMetrics | 메트릭 노출 형식 표준 |
+| Starburst Admin | SEP 배포·운영을 자동화하는 도구 |
+| AI Data Assistant (AIDA) | 분석을 보조하는 Starburst의 AI 어시스턴트 |
+| Starburst AI Agent | 자연어 질문을 SQL로 변환·실행하는 대화형 에이전트 |
+| MCP server | AI 에이전트가 인증된 상태로 클러스터에 질의하도록 노출하는 엔드포인트 |
+| AI functions | SQL에서 호출하는 임베딩·프롬프트·분류 등의 AI 함수 |
+| model provider | AI 기능이 호출하는 추론 모델 공급자. 폐쇄망에서는 내부 엔드포인트 지원 여부가 관건입니다 |
+| Guardrails | AI 기능의 오·남용을 막는 안전장치 |
+
+### Spotfire
+
+| 용어 | 설명 |
+|---|---|
+| In-database (live query) | 데이터를 가져오지 않고 원천에 직접 질의해 결과만 받는 방식 |
+| In-memory | 데이터를 Spotfire로 가져와 메모리에서 연산하는 방식 |
+| Hybrid in-database / in-memory | DB에서 원시 합계를 받아 메모리에서 추가 지표를 계산하는 혼합 방식 |
+| On-demand data | 사용자 상호작용에 따라 필요한 구간만 그때그때 적재하는 기능 |
+| Data wrangling | 분석 전에 데이터를 정리·변형·결합하는 작업 |
+| Data functions | Python·R 스크립트로 새 컬럼이나 테이블을 계산하는 확장 기능 |
+| Spotfire Service for R | 자체 R 환경을 연결해 오픈소스 R 패키지를 활용하는 구성요소 |
+| Spotfire Mods | 커스텀 시각화 유형을 만드는 경량 프레임워크 |
+| Ad-hoc 분석 | 사전 정의된 보고서 없이 즉석 질문에 따라 수행하는 분석 |
+
+### Cloudera AI
+
+| 용어 | 설명 |
+|---|---|
+| AI Workbench | 학습·개발 작업을 수행하는 Cloudera AI의 작업 환경 |
+| Sessions | Workbench의 CPU·메모리·GPU를 직접 사용하는 대화형 작업 단위 |
+| Experiments | 학습 워크로드의 여러 변형을 실행하고 결과를 추적하는 기능 |
+| Models | 배포되어 REST 엔드포인트로 서빙되는 모델 |
+| Jobs | 학습·평가 등 파이프라인을 자동 실행하는 작업 단위 |
+| Applications | Flask·Streamlit 등으로 만든 현업용 대화형 화면 |
+| Model Governance | 배포 모델을 카탈로그에 등록하고 모델-데이터 계보를 관리하는 것 |
+| 모델 드리프트 | 시간이 지나며 입력 분포가 변해 모델 성능이 저하되는 현상 |
+| Cloudera AI Inference Service | 예측형·생성형 모델을 운영 수준으로 서빙하는 환경 |
+| Agent Studio | 로우코드로 AI 에이전트와 도구를 구성하는 스튜디오 |
+| Hugging Face | 오픈소스 모델을 공유·배포하는 플랫폼 |
+| text generation · embedding · reranking | 각각 텍스트 생성, 벡터 변환, 검색 결과 재정렬 작업 유형 |
+| 로우코드 · 하이코드 | 최소한의 코드로 구성하는 방식과, 직접 코드로 구현하는 방식 |
+| GPU | 대규모 병렬 연산에 쓰이는 프로세서. 모델 학습·추론의 핵심 자원 |
