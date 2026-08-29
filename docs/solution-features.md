@@ -6,7 +6,8 @@
 
 [solutions.md](solutions.md) 가 "이 아키텍처에서 무엇을 담당하는가"를 다룬다면, 이
 문서는 "제품이 무엇을 제공하는가"의 목록입니다. 도입 검토와 기능 대조에 사용하는 것을
-전제로 했습니다.
+전제로 했습니다. 각 제품이 "어디에서 도는가"는
+[solution-runtimes.md](solution-runtimes.md) 에 따로 정리했습니다.
 
 **범위 표기** — 각 기능이 [참조 아키텍처](../assets/lakehouse-architecture-lr.svg) 에서
 차지하는 위치를 함께 표시했습니다.

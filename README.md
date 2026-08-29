@@ -28,6 +28,7 @@
 │   ├── architecture.md                   Layer별 설명과 경로 설계 근거
 │   ├── solutions.md                      솔루션별 역할과 담당 범위
 │   ├── solution-features.md              솔루션별 주요 기능 목록 (공식 문서 기준)
+│   ├── solution-runtimes.md              솔루션별 동작 환경과 배포 방식
 │   └── agent-readiness-analysis.md       Agent 대상 데이터 제공 요건 분석
 └── scripts/
     └── generate_architecture_svg.py      다이어그램 생성 스크립트
@@ -51,7 +52,8 @@
 
 상세 설명은 [docs/architecture.md](docs/architecture.md), 각 솔루션이 이 아키텍처에서
 담당하는 역할은 [docs/solutions.md](docs/solutions.md), 공식 문서에서 확인한 제품별 기능
-목록은 [docs/solution-features.md](docs/solution-features.md)를 참고하십시오.
+목록은 [docs/solution-features.md](docs/solution-features.md), 동작 환경과 배포 방식은
+[docs/solution-runtimes.md](docs/solution-runtimes.md)를 참고하십시오.
 
 ## 다이어그램 재생성
 
