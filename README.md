@@ -26,7 +26,8 @@
 ├── docs/
 │   ├── architecture.md                   Layer별 설명과 경로 설계 근거
 │   ├── solutions.md                      솔루션별 역할과 담당 범위
-│   └── solution-features.md              솔루션별 주요 기능 목록 (공식 문서 기준)
+│   ├── solution-features.md              솔루션별 주요 기능 목록 (공식 문서 기준)
+│   └── agent-readiness-analysis.md       Agent 대상 데이터 제공 요건 분석
 └── scripts/
     └── generate_architecture_svg.py      다이어그램 생성 스크립트
 ```
