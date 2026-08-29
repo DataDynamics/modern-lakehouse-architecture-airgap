@@ -45,6 +45,8 @@
 | 5 | Processing & Orchestration | Cloudera CDE — Airflow, Spark on Kubernetes |
 | 6 | Data Federation | Starburst Trino |
 | 7 | Consumption | Spotfire, Cloudera AI, SQL Client, Notebook |
+| + | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환) + 고객 보유 모델 |
+| + | AI Agent | 고객 AI Agent — Starburst MCP 도구, 권한 위임, 감사 |
 
 상세 설명은 [docs/architecture.md](docs/architecture.md), 각 솔루션이 이 아키텍처에서
 담당하는 역할은 [docs/solutions.md](docs/solutions.md), 공식 문서에서 확인한 제품별 기능

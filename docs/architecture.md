@@ -1,7 +1,8 @@
 # Modern Lakehouse Architecture (Air-gapped)
 
 폐쇄망 환경의 금융권 Lakehouse 참조 아키텍처입니다. 좌에서 우로 데이터가 흐르며,
-7개 Layer와 그 사이를 잇는 10개의 경로로 구성됩니다.
+7개 Layer와 이를 뒷받침하는 모델 서빙 · 고객 AI Agent 구성요소, 그리고 이들을 잇는
+14개의 경로로 구성됩니다.
 
 ![Lakehouse Reference Architecture](../assets/lakehouse-architecture-lr.svg)
 
@@ -16,6 +17,8 @@
   - [5. Processing & Orchestration Layer — Cloudera CDE](#5-processing--orchestration-layer--cloudera-cde)
   - [6. Data Federation Layer — Starburst Trino](#6-data-federation-layer--starburst-trino)
   - [7. Consumption Layer](#7-consumption-layer)
+  - [모델 서빙 — 고객 보유 모델](#모델-서빙--고객-보유-모델)
+  - [고객 AI Agent](#고객-ai-agent)
 - [Layer 간 경로](#layer-간-경로)
   - [조회 경로 선택 기준](#조회-경로-선택-기준)
 - [검토 시 확인할 사항](#검토-시-확인할-사항)
@@ -39,6 +42,8 @@
 | Processing & Orchestration | Cloudera CDE — Airflow, Spark on Kubernetes |
 | Data Federation | Starburst Trino |
 | Consumption | Spotfire, Cloudera AI |
+| 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환 엔드포인트) + 고객 보유 모델 |
+| AI Agent | 고객 AI Agent (Starburst MCP 도구 · 권한 위임 · 감사) |
 
 각 솔루션이 이 아키텍처 안에서 담당하는 범위와 역할 경계는 [solutions.md](solutions.md)에
 따로 정리했습니다.
@@ -158,6 +163,30 @@ Vector Store 선택 기준:
 성격이 다른 두 소비 패턴이 공존합니다. 집계 결과 조회는 Trino를, 대용량 학습 데이터는
 스토리지 직접 접근을 사용합니다.
 
+### 모델 서빙 — 고객 보유 모델
+
+Starburst의 AI 기능과 AI Agent가 공통으로 사용하는 추론 엔드포인트입니다.
+
+- **Cloudera AI Inference Service** — 사내 추론 엔드포인트, OpenAI 호환 API
+- **고객 보유 모델** — 생성 모델(NL-to-SQL·답변), 임베딩 모델(한국어), 리랭커
+
+Starburst는 모델 통합 방식으로 OpenAI API 호환 엔드포인트를 지원하며, 문서상 해당 모델이
+온프레미스에 배포된 경우도 명시적으로 허용합니다. 따라서 **폐쇄망에서 외부 모델 API를
+호출하지 않고 고객이 보유한 모델을 그대로 사용할 수 있습니다.**
+
+### 고객 AI Agent
+
+사람이 아닌 Agent가 데이터를 소비하는 접점입니다. Layer 7의 Spotfire·Notebook이 사람용
+접점이라면, 이 상자는 기계용 접점입니다.
+
+- **Agent 런타임** — 대화 세션, 도구 호출 계획, 사용자 권한 위임(impersonation)
+- **도구 (MCP)** — Starburst MCP Server, 문서 검색(RAG), Knowledge Graph 조회
+- **감사** — 질문 → 근거 → SQL → 답변의 전 과정 기록
+
+Agent가 자체 계정으로 조회하면 권한 통제가 무력화되므로, **질문한 사용자의 권한으로
+조회가 수행되어야 합니다.** 상세한 요건과 미결 사항은
+[agent-readiness-analysis.md](agent-readiness-analysis.md)를 참고하십시오.
+
 ---
 
 ## Layer 간 경로
@@ -175,6 +204,9 @@ Vector Store 선택 기준:
 | 1 → 6 | 보라 일점쇄선 | 원천 직접 페더레이션 | 적재 지연을 허용할 수 없거나, 규제상 복제본 생성이 불가한 데이터 |
 | 4 → 7 | 파랑 실선 | S3 API 직접 접근 | 학습 데이터 수천만 건을 Trino로 조회하면 Coordinator 병목. 문서 원본은 SQL 대상이 아님 |
 | 6 → 7 | 실선 | SQL 조회 | 행 수는 적고 연산이 무거운 대시보드 질의 |
+| 6 → 모델 서빙 | 청록 실선 | Model Provider 호출 | Starburst AI 기능이 사내 추론 엔드포인트를 호출. OpenAI 호환 규격이므로 폐쇄망에서 고객 보유 모델을 그대로 사용 |
+| Agent ↔ 6 | 자주 실선 (양방향) | MCP 도구 호출 | Agent가 메타데이터를 조회하고 SQL을 실행. Federation 덕분에 원천 메타데이터가 한 지점에 모임 |
+| Agent → 모델 서빙 | 청록 실선 | 추론 호출 | 답변 생성과 임베딩에 Starburst와 같은 내부 엔드포인트를 사용 |
 
 ### 조회 경로 선택 기준
 
