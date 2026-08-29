@@ -20,8 +20,8 @@ from xml.sax.saxutils import escape
 # Canvas
 # --------------------------------------------------------------------------
 
-CANVAS_W = 1820
-CANVAS_H = 1030
+CANVAS_W = 2180
+CANVAS_H = 1150
 BACKGROUND = "#FFFFFF"
 
 FONT_STACK = (
@@ -32,7 +32,7 @@ FONT_STACK = (
 TITLE = "Lakehouse Reference Architecture"
 SUBTITLE = (
     "Cloudera CFM \u00b7 CDP \u00b7 CDE  |  Starburst Trino  |  MinIO  |  "
-    "Spotfire \u00b7 Cloudera AI"
+    "Spotfire \u00b7 Cloudera AI  |  \uace0\uac1d AI Agent"
 )
 
 # --------------------------------------------------------------------------
@@ -58,12 +58,16 @@ PALETTE = {
     "purple": Ramp("#EEEDFE", "#534AB7", "#26215C", "#3C3489", "#534AB7", "#AFA9EC"),
     "amber": Ramp("#FAEEDA", "#854F0B", "#412402", "#633806", "#854F0B", "#EF9F27"),
     "green": Ramp("#EAF3DE", "#3B6D11", "#173404", "#27500A", "#3B6D11", "#97C459"),
+    "cyan": Ramp("#E2F1F7", "#0C6480", "#04303F", "#08495E", "#0C6480", "#63B4CE"),
+    "rose": Ramp("#FBEBF0", "#9B2D4F", "#450F21", "#6E1F38", "#9B2D4F", "#E294AC"),
 }
 
 INK = "#5F5E5A"          # neutral flow lines
 STREAM = "#993C1D"       # streaming (dashed)
 DIRECT = "#185FA5"       # S3 direct access
 FEDERATE = "#534AB7"     # source-level federation
+MODEL = "#0C6480"        # inference model call
+AGENT = "#9B2D4F"        # agent tool call
 HAIRLINE = "#D3D1C7"
 
 # Vertical rhythm inside a box
@@ -246,7 +250,7 @@ BOXES: list[Box] = [
         blocks=[],  # rendered from PROCESSING_LINES
     ),
     Box(
-        key="federation", x=1100, y=440, w=330, h=440, ramp="amber",
+        key="federation", x=1100, y=440, w=330, h=530, ramp="amber",
         title="6. Data Federation Layer",
         subtitle="Starburst Trino",
         blocks=[
@@ -259,9 +263,14 @@ BOXES: list[Box] = [
                 "\u2514 Oracle \u2192 \ud398\ub354\ub808\uc774\uc158",
             ]),
             Group("AI Features", [
-                "\u251c NL-to-SQL",
+                "\u251c NL-to-SQL (AIDA)",
+                "\u251c AI Agent \u00b7 AI Functions",
                 "\u251c RAG",
                 "\u2514 MCP Server",
+            ]),
+            Group("Model Provider", [
+                "\u251c OpenAI \ud638\ud658 \uc5d4\ub4dc\ud3ec\uc778\ud2b8",
+                "\u2514 \uc0ac\ub0b4 \ubaa8\ub378 \uc5f0\ub3d9 (on-prem)",
             ]),
             Group("Vector DB Support", [
                 "\u251c Iceberg",
@@ -280,14 +289,50 @@ BOXES: list[Box] = [
                 "In-DB \ubaa8\ub4dc\ub85c Trino \uc9c1\uc811 \uc9c8\uc758",
             ]),
             Group("Cloudera AI", [
-                "AI Workbench \u00b7 \ubaa8\ub378 \ud559\uc2b5 / \uc11c\ube59",
-                "AI Studio \u00b7 Agent",
+                "AI Workbench \u00b7 \ubaa8\ub378 \ud559\uc2b5",
+                "AI Studio \u00b7 Agent Studio",
             ]),
             Items([
                 "SQL Client (DBeaver)",
                 "ML / Notebook (Jupyter)",
                 "API",
             ], lead=34, step=24),
+        ],
+    ),
+    Box(
+        key="serving", x=1850, y=120, w=290, h=290, ramp="cyan",
+        title="모델 서빙 (고객 보유 모델)",
+        subtitle="OpenAI 호환 엔드포인트",
+        blocks=[
+            Group("Cloudera AI Inference Service", [
+                "사내 추론 엔드포인트 (on-prem)",
+                "OpenAI 호환 API",
+            ]),
+            Group("고객 보유 모델", [
+                "생성 모델 (NL-to-SQL · 답변)",
+                "임베딩 모델 (한국어)",
+                "리랭커",
+            ]),
+            Note("외부 모델 API 호출 없음 · 전 구간 내부"),
+        ],
+    ),
+    Box(
+        key="agent", x=1850, y=440, w=290, h=330, ramp="rose",
+        title="고객 AI Agent",
+        subtitle="업무 질의 · 문서 조회",
+        blocks=[
+            Group("Agent 런타임", [
+                "대화 세션 · 도구 호출 계획",
+                "사용자 권한 위임 (impersonation)",
+            ]),
+            Group("도구 (MCP)", [
+                "├ Starburst MCP Server",
+                "├ 문서 검색 (RAG)",
+                "└ Knowledge Graph 조회",
+            ]),
+            Group("감사", [
+                "질문 → 근거 → SQL → 답변 기록",
+            ]),
         ],
     ),
 ]
@@ -336,21 +381,34 @@ EDGES: list[Edge] = [
          label="S3 API \uc9c1\uc811 \uc811\uadfc (\ud559\uc2b5 \ub370\uc774\ud130 \u00b7 "
                "\ubb38\uc11c \uc6d0\ubcf8)",
          label_xy=(1150, 414)),
-    Edge("M1430 620 H1492", label="JDBC / ODBC", label_xy=(1436, 610)),
-    Edge("M165 750 V940 H1265 V884", FEDERATE, "10 3 2 3",
+    Edge("M1430 620 H1492", label="JDBC/ODBC", label_xy=(1436, 608)),
+    Edge("M165 750 V1030 H1265 V974", FEDERATE, "10 3 2 3",
          label="Multi Data Source\uc758 Data Federation",
-         label_xy=(520, 930)),
+         label_xy=(520, 1020)),
+    Edge("M1430 860 H1815 V412", MODEL,
+         label="Model Provider \ud638\ucd9c",
+         label_xy=(1500, 852)),
+    Edge("M1900 772 V900 H1442", AGENT, both=True,
+         label="MCP \u00b7 \uba54\ud0c0\ub370\uc774\ud130 \u00b7 SQL",
+         label_xy=(1610, 892)),
+    Edge("M1995 436 V412", MODEL,
+         label="\ucd94\ub860 \ud638\ucd9c", label_xy=(2010, 431)),
 ]
 
 LEGEND = [
     "\ubc30\uce58 \uacbd\ub85c : Source \u2192 CFM \u2192 MinIO   |   "
     "\uc2e4\uc2dc\uac04 \uacbd\ub85c : Source / CFM \u2192 Kafka(CDP) \u2192 "
     "CDE Spark Streaming \u2192 MinIO   |   \uc870\ud68c \uacbd\ub85c : "
-    "Starburst Trino \u2192 Spotfire \u00b7 Cloudera AI",
+    "Starburst Trino \u2192 Spotfire \u00b7 Cloudera AI   |   "
+    "Agent \uacbd\ub85c : AI Agent \u2192 MCP \u2192 Starburst \u2192 "
+    "\uc0ac\ub0b4 \ubaa8\ub378",
     "\uc2e4\uc120 = \uc0c1\uc2dc \ub370\uc774\ud130 \ud750\ub984   \u00b7   "
     "\uc8fc\ud669 \uc810\uc120 = \uc2a4\ud2b8\ub9ac\ubc0d \uacbd\ub85c   \u00b7   "
     "\ud30c\ub791 \uc2e4\uc120 = S3 \uc9c1\uc811 \uc811\uadfc   \u00b7   "
-    "\ubcf4\ub77c \uc77c\uc810\uc1c4\uc120 = \uc6d0\ucc9c \uc9c1\uc811 \ud398\ub354\ub808\uc774\uc158",
+    "\ubcf4\ub77c \uc77c\uc810\uc1c4\uc120 = \uc6d0\ucc9c \uc9c1\uc811 "
+    "\ud398\ub354\ub808\uc774\uc158   \u00b7   "
+    "\uccad\ub85d \uc2e4\uc120 = \ubaa8\ub378 \ud638\ucd9c   \u00b7   "
+    "\uc790\uc8fc \uc2e4\uc120 = Agent \ub3c4\uad6c \ud638\ucd9c",
 ]
 
 # --------------------------------------------------------------------------
@@ -450,8 +508,10 @@ def build() -> str:
         '<desc>Air-gapped modern lakehouse reference architecture, '
         'left to right: financial data sources, Cloudera CFM ingestion, '
         'Cloudera CDP streaming bus, MinIO storage with Iceberg, '
-        'Cloudera CDE processing, Starburst Trino federation, '
-        'and consumption.</desc>',
+        'Cloudera CDE processing, Starburst Trino federation with an '
+        'on-premises model provider, consumption, a customer AI agent '
+        'calling Starburst over MCP, and internally served customer '
+        'models.</desc>',
         '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" '
         'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
         '<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" '
@@ -468,10 +528,10 @@ def build() -> str:
     for box in BOXES:
         parts += render_box(box)
 
-    parts.append(f'<line x1="40" y1="970" x2="{CANVAS_W - 40}" y2="970" '
+    parts.append(f'<line x1="40" y1="1075" x2="{CANVAS_W - 40}" y2="1075" '
                  f'stroke="{HAIRLINE}" stroke-width="0.9"/>')
     for i, line in enumerate(LEGEND):
-        parts.append(text(40, 990 + i * 18, line, 11, "#888780"))
+        parts.append(text(40, 1095 + i * 18, line, 11, "#888780"))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
