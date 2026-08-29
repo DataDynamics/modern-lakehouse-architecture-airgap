@@ -304,8 +304,10 @@ SQL 조회 대상이 아닙니다. 반대로 gold 마트의 집계 결과처럼 
 **Starburst AI Features 와의 관계**
 
 Layer 6 의 NL-to-SQL 과 RAG 는 추론 엔드포인트를 필요로 합니다. 폐쇄망에서는 외부 모델
-API 를 호출할 수 없으므로 Cloudera AI 의 모델 서빙이 그 공급자가 됩니다. 즉 Cloudera AI 는
-**Layer 7 의 소비자이면서 동시에 Layer 6 AI 기능의 공급자**로도 동작합니다.
+API 를 호출할 수 없으나, Starburst 가 OpenAI 호환 엔드포인트를 model provider 로 지원하고
+Cloudera AI Inference Service 가 그 규격의 엔드포인트를 제공하므로 전 구간이 내부에서
+닫힙니다. 즉 Cloudera AI 는 **Layer 7 의 소비자이면서 동시에 Layer 6 AI 기능의 공급자**로도
+동작합니다.
 
 **주의**
 
