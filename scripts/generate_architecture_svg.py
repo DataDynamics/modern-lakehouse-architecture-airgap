@@ -33,7 +33,7 @@ from xml.sax.saxutils import escape
 # --------------------------------------------------------------------------
 
 CANVAS_W = 2180
-CANVAS_H = 1150
+CANVAS_H = 1560
 BACKGROUND = "#FFFFFF"
 
 FONT_STACK = (
@@ -44,7 +44,7 @@ FONT_STACK = (
 TITLE = "Lakehouse Reference Architecture"
 SUBTITLE = (
     "Cloudera CFM \u00b7 CDP \u00b7 CDE  |  Starburst Trino  |  MinIO  |  "
-    "Spotfire \u00b7 Cloudera AI  |  \uace0\uac1d AI Agent"
+    "Spotfire \u00b7 Cloudera AI  |  RAG \u00b7 Vector DB  |  \uace0\uac1d AI Agent"
 )
 
 # --------------------------------------------------------------------------
@@ -72,6 +72,8 @@ PALETTE = {
     "green": Ramp("#EAF3DE", "#3B6D11", "#173404", "#27500A", "#3B6D11", "#97C459"),
     "cyan": Ramp("#E2F1F7", "#0C6480", "#04303F", "#08495E", "#0C6480", "#63B4CE"),
     "rose": Ramp("#FBEBF0", "#9B2D4F", "#450F21", "#6E1F38", "#9B2D4F", "#E294AC"),
+    "plum": Ramp("#F6E9F7", "#7B2E86", "#350E3A", "#551F5D", "#7B2E86", "#CE97D6"),
+    "steel": Ramp("#E9EEF2", "#3E5D72", "#12242E", "#26414F", "#3E5D72", "#9BB3C2"),
 }
 
 INK = "#5F5E5A"          # neutral flow lines
@@ -161,7 +163,7 @@ class Box:
 
 
 # --------------------------------------------------------------------------
-# The seven layers
+# The seven layers, plus the model serving / AI agent / RAG boxes
 # --------------------------------------------------------------------------
 
 BOXES: list[Box] = [
@@ -247,7 +249,7 @@ BOXES: list[Box] = [
                 ("s3a://lake/bronze/", "\uc6d0\ucc9c \uadf8\ub300\ub85c (append)"),
                 ("s3a://lake/silver/", "\uc815\uc81c \u00b7 \uc911\ubcf5\uc81c\uac70 \u00b7 SCD"),
                 ("s3a://lake/gold/", "\uc9d1\uacc4 \u00b7 \ub9c8\ud2b8 \u00b7 \ud53c\ucc98"),
-                ("s3a://lake/docs/", "\ubb38\uc11c \u00b7 \uc774\ubbf8\uc9c0 \u00b7 \uc784\ubca0\ub529 (RAG)"),
+                ("s3a://lake/docs/", "\ubb38\uc11c \u00b7 \uc774\ubbf8\uc9c0 \uc6d0\ubcf8 (RAG \uc785\ub825)"),
             ]),
             Rule(),
             Items(["Table Format : Iceberg Table"], lead=22),
@@ -347,6 +349,48 @@ BOXES: list[Box] = [
             ]),
         ],
     ),
+    Box(
+        key="rag", x=730, y=1050, w=300, h=360, ramp="plum",
+        title="RAG 파이프라인",
+        subtitle="Cloudera CDE Spark · 문서 임베딩",
+        blocks=[
+            Group("문서 적재 · 파싱", [
+                "docs/raw/ → docs/parsed/",
+                "PDF · HWP · 이미지 OCR · 표 인식",
+            ]),
+            Group("청킹 · 임베딩", [
+                "docs/parsed/ → docs/chunks/",
+                "임베딩 모델 호출 (OpenAI 호환)",
+                "docs/chunks/ → docs/vectors/",
+            ]),
+            Group("색인 적재 (Index)", [
+                "Vector DB upsert · 증분 갱신",
+                "Airflow DAG 스케줄 · 재처리",
+            ]),
+            Note("파싱 결과 보존 → 모델 교체 시 재임베딩만"),
+        ],
+    ),
+    Box(
+        key="vectordb", x=1100, y=1050, w=330, h=360, ramp="steel",
+        title="Vector DB",
+        subtitle="임베딩 인덱스 저장소",
+        blocks=[
+            Group("저장 대상", [
+                "청크 벡터 + 메타데이터",
+                "출처 s3 경로 · 권한 태그",
+            ]),
+            Group("후보 저장소", [
+                "├ Iceberg (docs/vectors/)",
+                "├ PostgreSQL / PGVector",
+                "└ Elasticsearch (Nori + kNN)",
+            ]),
+            Group("검색", [
+                "유사도 검색 (Top-K) · 필터",
+                "하이브리드 (BM25 + 벡터) · RRF",
+            ]),
+            Note("Starburst · AI Agent 양쪽에서 조회"),
+        ],
+    ),
 ]
 
 # The processing box has a nested tree shape, so it is described separately.
@@ -394,9 +438,9 @@ EDGES: list[Edge] = [
                "\ubb38\uc11c \uc6d0\ubcf8)",
          label_xy=(1150, 414)),
     Edge("M1430 620 H1492", label="JDBC/ODBC", label_xy=(1436, 608)),
-    Edge("M165 750 V1030 H1265 V974", FEDERATE, "10 3 2 3",
+    Edge("M165 750 V990 H1075 V944 H1092", FEDERATE, "10 3 2 3",
          label="Multi Data Source\uc758 Data Federation",
-         label_xy=(520, 1020)),
+         label_xy=(520, 980)),
     Edge("M1430 860 H1815 V412", MODEL,
          label="Model Provider \ud638\ucd9c",
          label_xy=(1500, 852)),
@@ -405,6 +449,17 @@ EDGES: list[Edge] = [
          label_xy=(1610, 892)),
     Edge("M1995 436 V412", MODEL,
          label="\ucd94\ub860 \ud638\ucd9c", label_xy=(2010, 431)),
+    # RAG: MinIO docs/ -> RAG pipeline -> Vector DB -> AI Agent / Trino
+    Edge("M880 870 V1042", DIRECT,
+         label="S3 API \uc9c1\uc811 \uc811\uadfc : s3a://lake/docs/",
+         label_xy=(893, 925)),
+    Edge("M1030 1230 H1092", label="upsert", label_xy=(1036, 1218)),
+    Edge("M1430 1150 H1990 V778", AGENT,
+         label="\uc720\uc0ac\ub3c4 \uac80\uc0c9 (Top-K) \u00b7 \uadfc\uac70 \ubb38\uc11c",
+         label_xy=(1450, 1140)),
+    Edge("M1265 1042 V978", both=True,
+         label="\ubca1\ud130 \ud14c\uc774\ube14 \uc870\ud68c",
+         label_xy=(1278, 1022)),
 ]
 
 LEGEND = [
@@ -414,6 +469,9 @@ LEGEND = [
     "Starburst Trino \u2192 Spotfire \u00b7 Cloudera AI   |   "
     "Agent \uacbd\ub85c : AI Agent \u2192 MCP \u2192 Starburst \u2192 "
     "\uc0ac\ub0b4 \ubaa8\ub378",
+    "RAG \uacbd\ub85c : MinIO s3a://lake/docs/ \u2192 RAG "
+    "\ud30c\uc774\ud504\ub77c\uc778(CDE Spark) \u2192 Vector DB \u2192 "
+    "AI Agent \u00b7 Starburst Trino",
     "\uc2e4\uc120 = \uc0c1\uc2dc \ub370\uc774\ud130 \ud750\ub984   \u00b7   "
     "\uc8fc\ud669 \uc810\uc120 = \uc2a4\ud2b8\ub9ac\ubc0d \uacbd\ub85c   \u00b7   "
     "\ud30c\ub791 \uc2e4\uc120 = S3 \uc9c1\uc811 \uc811\uadfc   \u00b7   "
@@ -523,7 +581,12 @@ def build() -> str:
         'Cloudera CDE processing, Starburst Trino federation with an '
         'on-premises model provider, consumption, a customer AI agent '
         'calling Starburst over MCP, and internally served customer '
-        'models.</desc>',
+        'models. Along the bottom, a RAG pipeline reads document '
+        'originals from the MinIO docs zone over the S3 API, parses, '
+        'chunks and embeds them, writes the embeddings into a vector '
+        'database, and the vector database serves top-K retrieval to '
+        'the customer AI agent and vector tables to Starburst '
+        'Trino.</desc>',
         '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" '
         'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
         '<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" '
@@ -540,10 +603,10 @@ def build() -> str:
     for box in BOXES:
         parts += render_box(box)
 
-    parts.append(f'<line x1="40" y1="1075" x2="{CANVAS_W - 40}" y2="1075" '
+    parts.append(f'<line x1="40" y1="1470" x2="{CANVAS_W - 40}" y2="1470" '
                  f'stroke="{HAIRLINE}" stroke-width="0.9"/>')
     for i, line in enumerate(LEGEND):
-        parts.append(text(40, 1095 + i * 18, line, 11, "#888780"))
+        parts.append(text(40, 1490 + i * 18, line, 11, "#888780"))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 

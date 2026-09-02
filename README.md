@@ -48,6 +48,8 @@
 | 5 | Processing & Orchestration | Cloudera CDE — Airflow, Spark on Kubernetes |
 | 6 | Data Federation | Starburst Trino |
 | 7 | Consumption | Spotfire, Cloudera AI, SQL Client, Notebook |
+| + | RAG 파이프라인 | Cloudera CDE Spark — 문서 파싱·청킹·임베딩 |
+| + | Vector DB | Iceberg / PostgreSQL·PGVector / Elasticsearch |
 | + | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환) + 고객 보유 모델 |
 | + | AI Agent | 고객 AI Agent — Starburst MCP 도구, 권한 위임, 감사 |
 
@@ -72,7 +74,7 @@ SVG와 PNG가 항상 함께 생성됩니다.
 
 ```
 assets/lakehouse-architecture-lr.svg    벡터 (문서 삽입 · 확대)
-assets/lakehouse-architecture-lr.png    래스터 4360 x 2300 (발표자료 · 이슈 첨부)
+assets/lakehouse-architecture-lr.png    래스터 4360 x 3120 (발표자료 · 이슈 첨부)
 ```
 
 | 옵션 | 설명 |
@@ -131,7 +133,7 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 |---|---|
 | 폐쇄망 (air-gapped) | 외부 인터넷과 물리적·논리적으로 분리된 망. 외부 서비스 호출과 온라인 패키지 설치가 불가하므로, 모든 구성요소를 내부에 배치하고 설치 미디어를 반입해 공급해야 합니다 |
 | Lakehouse | 데이터 레이크의 저비용 대용량 저장과 데이터 웨어하우스의 테이블·트랜잭션 특성을 한 저장소에서 함께 제공하는 아키텍처 |
-| Layer | 이 아키텍처의 논리 구획 단위. 좌에서 우로 Data Source → Ingestion → Streaming Bus → Storage → Processing & Orchestration → Data Federation → Consumption 7개로 구성됩니다 |
+| Layer | 이 아키텍처의 논리 구획 단위. 좌에서 우로 Data Source → Ingestion → Streaming Bus → Storage → Processing & Orchestration → Data Federation → Consumption 7개로 구성됩니다. 하단의 RAG 파이프라인 · Vector DB와 우측의 모델 서빙 · AI Agent는 이 7개 Layer를 뒷받침하는 부속 구성요소입니다 |
 | 계정계 · 정보계 | 금융 IT의 전통적 구분. 계정계는 예금·여신 등 거래를 처리하는 원장 시스템, 정보계는 계정계 데이터를 분석 목적으로 재구성한 시스템 |
 | 대외계 | 금융결제원, 신용정보원 등 외부 기관과 전문을 주고받는 시스템 |
 
@@ -153,6 +155,8 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 | Starburst Trino | 분산 SQL 질의 엔진 Trino의 상용 배포판. 여러 저장소를 하나의 SQL 네임스페이스로 묶습니다 |
 | Spotfire | 시각화 기반 분석 플랫폼. 대시보드와 Ad-hoc 분석에 사용 |
 | Cloudera AI | 모델 학습·서빙과 AI 에이전트를 제공하는 Cloudera 제품 |
+| PGVector | PostgreSQL에 벡터 타입과 유사도 인덱스(HNSW 등)를 추가하는 확장 |
+| Elasticsearch | 문서 검색 엔진. 한국어 형태소 분석(Nori)과 kNN 벡터 검색을 함께 제공합니다 |
 
 ### 기타
 
@@ -164,3 +168,8 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 | rsvg-convert · Inkscape | SVG를 PNG 등 래스터 이미지로 변환하는 도구 |
 | 폰트 스택 | 폰트를 우선순위대로 나열한 목록. 앞의 폰트가 없으면 다음 폰트를 사용합니다 |
 | Ad-hoc 분석 | 미리 정의된 보고서가 아니라, 그때그때 질문에 따라 즉석으로 수행하는 분석 |
+| RAG | Retrieval-Augmented Generation. 질문과 관련된 문서를 검색해 근거로 제공한 뒤 답변을 생성하는 방식 |
+| 청킹 (chunking) | 긴 문서를 검색 단위로 잘라내는 것. 조각마다 출처와 메타데이터를 붙입니다 |
+| 임베딩 (embedding) | 텍스트를 의미를 담은 숫자 벡터로 변환하는 것. 유사도 검색의 기준값이 됩니다 |
+| Vector DB | 임베딩 벡터와 메타데이터를 저장하고 유사도 검색을 제공하는 저장소 |
+| Top-K 검색 | 질의 벡터와 가장 가까운 K개의 청크를 찾아 반환하는 검색 |
