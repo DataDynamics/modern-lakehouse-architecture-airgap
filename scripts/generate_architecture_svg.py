@@ -33,7 +33,7 @@ from xml.sax.saxutils import escape
 # --------------------------------------------------------------------------
 
 CANVAS_W = 2180
-CANVAS_H = 1560
+CANVAS_H = 1620
 BACKGROUND = "#FFFFFF"
 
 FONT_STACK = (
@@ -44,7 +44,8 @@ FONT_STACK = (
 TITLE = "Lakehouse Reference Architecture"
 SUBTITLE = (
     "Cloudera CFM \u00b7 CDP \u00b7 CDE  |  Starburst Trino  |  MinIO  |  "
-    "Spotfire \u00b7 Cloudera AI  |  RAG \u00b7 Vector DB  |  \uace0\uac1d AI Agent"
+    "Spotfire \u00b7 Cloudera AI  |  Argus RAG Studio \u00b7 Vector DB  |  "
+    "\uace0\uac1d AI Agent"
 )
 
 # --------------------------------------------------------------------------
@@ -341,7 +342,7 @@ BOXES: list[Box] = [
             ]),
             Group("도구 (MCP)", [
                 "├ Starburst MCP Server",
-                "├ 문서 검색 (RAG)",
+                "├ 문서 검색 (Vector DB · RAG API)",
                 "└ Knowledge Graph 조회",
             ]),
             Group("감사", [
@@ -350,9 +351,9 @@ BOXES: list[Box] = [
         ],
     ),
     Box(
-        key="rag", x=730, y=1050, w=300, h=360, ramp="plum",
-        title="RAG 파이프라인",
-        subtitle="Cloudera CDE Spark · 문서 임베딩",
+        key="rag", x=730, y=1050, w=300, h=420, ramp="plum",
+        title="Argus RAG Studio",
+        subtitle="RAG 파이프라인 · 검색 API",
         blocks=[
             Group("문서 적재 · 파싱", [
                 "docs/raw/ → docs/parsed/",
@@ -363,15 +364,19 @@ BOXES: list[Box] = [
                 "임베딩 모델 호출 (OpenAI 호환)",
                 "docs/chunks/ → docs/vectors/",
             ]),
-            Group("색인 적재 (Index)", [
+            Group("색인 적재 · 운영", [
                 "Vector DB upsert · 증분 갱신",
-                "Airflow DAG 스케줄 · 재처리",
+                "스케줄 · 재처리 · 검색 품질 평가",
             ]),
-            Note("파싱 결과 보존 → 모델 교체 시 재임베딩만"),
+            Group("RAG API", [
+                "retrieve : 검색 · 리랭킹 · 권한 필터",
+                "query : 근거 인용 답변 생성",
+                "REST · OpenAI 호환 엔드포인트",
+            ]),
         ],
     ),
     Box(
-        key="vectordb", x=1100, y=1050, w=330, h=360, ramp="steel",
+        key="vectordb", x=1100, y=1050, w=330, h=420, ramp="steel",
         title="Vector DB",
         subtitle="임베딩 인덱스 저장소",
         blocks=[
@@ -388,7 +393,11 @@ BOXES: list[Box] = [
                 "유사도 검색 (Top-K) · 필터",
                 "하이브리드 (BM25 + 벡터) · RRF",
             ]),
-            Note("Starburst · AI Agent 양쪽에서 조회"),
+            Group("호출 주체", [
+                "├ Argus RAG Studio (색인 · 검색)",
+                "├ AI Agent (직접 조회)",
+                "└ Starburst Trino (벡터 테이블)",
+            ]),
         ],
     ),
 ]
@@ -453,10 +462,14 @@ EDGES: list[Edge] = [
     Edge("M880 870 V1042", DIRECT,
          label="S3 API \uc9c1\uc811 \uc811\uadfc : s3a://lake/docs/",
          label_xy=(893, 925)),
-    Edge("M1030 1230 H1092", label="upsert", label_xy=(1036, 1218)),
+    Edge("M1030 1230 H1092", both=True,
+         label="upsert \u00b7 \uac80\uc0c9", label_xy=(1034, 1218)),
     Edge("M1430 1150 H1990 V778", AGENT,
-         label="\uc720\uc0ac\ub3c4 \uac80\uc0c9 (Top-K) \u00b7 \uadfc\uac70 \ubb38\uc11c",
+         label="Vector DB \uc9c1\uc811 \uc870\ud68c (Top-K) \u00b7 \uadfc\uac70 \ubb38\uc11c",
          label_xy=(1450, 1140)),
+    Edge("M2060 772 V1500 H880 V1474", AGENT, both=True,
+         label="Argus RAG API \ud638\ucd9c (retrieve \u00b7 query)",
+         label_xy=(1300, 1492)),
     Edge("M1265 1042 V978", both=True,
          label="\ubca1\ud130 \ud14c\uc774\ube14 \uc870\ud68c",
          label_xy=(1278, 1022)),
@@ -469,9 +482,9 @@ LEGEND = [
     "Starburst Trino \u2192 Spotfire \u00b7 Cloudera AI   |   "
     "Agent \uacbd\ub85c : AI Agent \u2192 MCP \u2192 Starburst \u2192 "
     "\uc0ac\ub0b4 \ubaa8\ub378",
-    "RAG \uacbd\ub85c : MinIO s3a://lake/docs/ \u2192 RAG "
-    "\ud30c\uc774\ud504\ub77c\uc778(CDE Spark) \u2192 Vector DB \u2192 "
-    "AI Agent \u00b7 Starburst Trino",
+    "RAG \uacbd\ub85c : MinIO s3a://lake/docs/ \u2192 Argus RAG Studio "
+    "\u2192 Vector DB \u2192 AI Agent (\uc9c1\uc811 \uc870\ud68c \ub610\ub294 "
+    "Argus RAG API) \u00b7 Starburst Trino",
     "\uc2e4\uc120 = \uc0c1\uc2dc \ub370\uc774\ud130 \ud750\ub984   \u00b7   "
     "\uc8fc\ud669 \uc810\uc120 = \uc2a4\ud2b8\ub9ac\ubc0d \uacbd\ub85c   \u00b7   "
     "\ud30c\ub791 \uc2e4\uc120 = S3 \uc9c1\uc811 \uc811\uadfc   \u00b7   "
@@ -581,12 +594,13 @@ def build() -> str:
         'Cloudera CDE processing, Starburst Trino federation with an '
         'on-premises model provider, consumption, a customer AI agent '
         'calling Starburst over MCP, and internally served customer '
-        'models. Along the bottom, a RAG pipeline reads document '
+        'models. Along the bottom, Argus RAG Studio reads document '
         'originals from the MinIO docs zone over the S3 API, parses, '
-        'chunks and embeds them, writes the embeddings into a vector '
-        'database, and the vector database serves top-K retrieval to '
-        'the customer AI agent and vector tables to Starburst '
-        'Trino.</desc>',
+        'chunks and embeds them, and writes the embeddings into a '
+        'vector database. The AI agent reaches the vectors either by '
+        'querying the vector database directly or through the Argus '
+        'RAG API; Starburst Trino exposes the same vectors as '
+        'tables.</desc>',
         '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" '
         'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
         '<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" '
@@ -603,10 +617,10 @@ def build() -> str:
     for box in BOXES:
         parts += render_box(box)
 
-    parts.append(f'<line x1="40" y1="1470" x2="{CANVAS_W - 40}" y2="1470" '
+    parts.append(f'<line x1="40" y1="1530" x2="{CANVAS_W - 40}" y2="1530" '
                  f'stroke="{HAIRLINE}" stroke-width="0.9"/>')
     for i, line in enumerate(LEGEND):
-        parts.append(text(40, 1490 + i * 18, line, 11, "#888780"))
+        parts.append(text(40, 1550 + i * 18, line, 11, "#888780"))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 

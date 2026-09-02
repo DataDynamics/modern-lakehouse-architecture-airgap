@@ -146,7 +146,7 @@ Cloudera AI 가 모두 같은 프로토콜로 같은 데이터에 접근합니�
 | 양방향 | 5. Processing | 읽어서 정제하고 다시 쓰는 medallion 왕복 |
 | 송신 | 6. Federation | Trino Iceberg 커넥터의 주 조회 경로 |
 | 송신 | 7. Consumption | S3 API 직접 접근 (파랑 실선) |
-| 송신 | RAG 파이프라인 | `docs/` 문서 원본을 S3 API 로 직접 조회 (파랑 실선) |
+| 송신 | Argus RAG Studio | `docs/` 문서 원본을 S3 API 로 직접 조회 (파랑 실선) |
 
 **담당하지 않는 것**
 

@@ -1,8 +1,8 @@
 # Modern Lakehouse Architecture (Air-gapped)
 
 폐쇄망 환경의 금융권 Lakehouse 참조 아키텍처입니다. 좌에서 우로 데이터가 흐르며,
-7개 Layer와 이를 뒷받침하는 RAG 파이프라인 · Vector DB · 모델 서빙 · 고객 AI Agent
-구성요소, 그리고 이들을 잇는 18개의 경로로 구성됩니다.
+7개 Layer와 이를 뒷받침하는 Argus RAG Studio · Vector DB · 모델 서빙 · 고객 AI Agent
+구성요소, 그리고 이들을 잇는 19개의 경로로 구성됩니다.
 
 ![Lakehouse Reference Architecture](../assets/lakehouse-architecture-lr.svg)
 
@@ -17,7 +17,7 @@
   - [5. Processing & Orchestration Layer — Cloudera CDE](#5-processing--orchestration-layer--cloudera-cde)
   - [6. Data Federation Layer — Starburst Trino](#6-data-federation-layer--starburst-trino)
   - [7. Consumption Layer](#7-consumption-layer)
-  - [RAG 파이프라인 — Cloudera CDE Spark](#rag-파이프라인--cloudera-cde-spark)
+  - [RAG — Argus RAG Studio](#rag--argus-rag-studio)
   - [Vector DB — 임베딩 인덱스 저장소](#vector-db--임베딩-인덱스-저장소)
   - [모델 서빙 — 고객 보유 모델](#모델-서빙--고객-보유-모델)
   - [고객 AI Agent](#고객-ai-agent)
@@ -44,7 +44,7 @@
 | Processing & Orchestration | Cloudera CDE — Airflow, Spark on Kubernetes |
 | Data Federation | Starburst Trino |
 | Consumption | Spotfire, Cloudera AI |
-| RAG 파이프라인 | Cloudera CDE (Spark on K8s + Airflow) |
+| RAG | Argus RAG Studio (파이프라인 + 검색 API) |
 | Vector DB | Iceberg, PostgreSQL/PGVector, Elasticsearch 중 택일 |
 | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환 엔드포인트) + 고객 보유 모델 |
 | AI Agent | 고객 AI Agent (Starburst MCP 도구 · 권한 위임 · 감사) |
@@ -168,19 +168,23 @@ Vector Store 선택 기준:
 성격이 다른 두 소비 패턴이 공존합니다. 집계 결과 조회는 Trino를, 대용량 학습 데이터는
 스토리지 직접 접근을 사용합니다.
 
-### RAG 파이프라인 — Cloudera CDE Spark
+### RAG — Argus RAG Studio
 
 Storage Layer의 `docs/` 존에 쌓인 비정형 문서를 Agent가 근거로 쓸 수 있는 형태로
-바꾸는 파이프라인입니다. 정형 데이터의 Bronze→Silver→Gold와 같은 자리에 있는,
-비정형 데이터의 medallion 경로라고 보면 됩니다.
+바꾸고, 그 결과를 API로 내어주는 구성요소입니다. 정형 데이터의 Bronze→Silver→Gold와
+같은 자리에 있는, 비정형 데이터의 medallion 경로라고 보면 됩니다. 파이프라인과 검색
+API를 한 제품이 담당하므로 색인 시점의 청킹·메타데이터 규칙과 검색 시점의 필터
+규칙이 한 곳에서 관리됩니다.
 
 - **문서 적재 · 파싱** — `docs/raw/` → `docs/parsed/`. PDF·HWP·이미지에서 텍스트를
   추출하고, 스캔 문서는 OCR, 표는 구조를 보존해 추출
 - **청킹 · 임베딩** — `docs/parsed/` → `docs/chunks/` → `docs/vectors/`. 청크마다
   출처 경로·문서 종류·유효기간 같은 메타데이터를 부여하고, 모델 서빙의 임베딩
   엔드포인트(OpenAI 호환)를 호출해 벡터를 생성
-- **색인 적재** — 생성한 벡터를 Vector DB에 upsert. 신규·변경 문서만 증분 처리하며,
-  전체 재색인과 재처리 일정은 Airflow DAG로 관리
+- **색인 적재 · 운영** — 생성한 벡터를 Vector DB에 upsert. 신규·변경 문서만 증분
+  처리하며, 재처리 일정과 검색 품질 평가는 Studio 안에서 관리
+- **RAG API** — `retrieve`(검색·리랭킹·권한 필터)와 `query`(근거 인용 답변 생성).
+  REST와 OpenAI 호환 엔드포인트로 노출되어 Agent가 도구로 호출
 
 원본을 읽는 경로는 Trino가 아니라 **S3 API 직접 접근**입니다. 문서 원본은 SQL 조회
 대상이 아니고, 파싱은 파일 단위 병렬 처리가 유리하기 때문입니다.
@@ -195,7 +199,7 @@ Storage Layer의 `docs/` 존에 쌓인 비정형 문서를 Agent가 근거로 �
 
 ### Vector DB — 임베딩 인덱스 저장소
 
-RAG 파이프라인의 산출물을 담고 유사도 검색을 제공하는 저장소입니다.
+Argus RAG Studio 파이프라인의 산출물을 담고 유사도 검색을 제공하는 저장소입니다.
 
 - **저장 대상** — 청크 벡터와 메타데이터, 출처 s3 경로, 권한 태그
 - **후보 저장소** — Iceberg(`docs/vectors/`), PostgreSQL/PGVector,
@@ -203,10 +207,18 @@ RAG 파이프라인의 산출물을 담고 유사도 검색을 제공하는 저�
   Vector Store 표를 참고하십시오
 - **검색** — Top-K 유사도 검색과 메타데이터 필터, BM25와 벡터를 RRF로 합치는 하이브리드
 
-소비 접점은 둘입니다. **AI Agent**는 문서 검색 도구로 직접 조회하고, **Starburst
-Trino**는 Vector DB 커넥터로 벡터 테이블을 SQL 네임스페이스에 편입해 정형 데이터와
-함께 조회합니다. 어느 쪽을 쓸지는 질문 유형에 따라 갈립니다. 문서 근거만 필요하면
-Agent가 직접, 수치와 문서를 함께 묶어야 하면 Trino를 경유합니다.
+호출 주체는 셋입니다. **Argus RAG Studio**가 색인을 쓰고 API 처리 시 검색하며,
+**AI Agent**는 문서 검색 도구로 직접 조회할 수 있고, **Starburst Trino**는 Vector DB
+커넥터로 벡터 테이블을 SQL 네임스페이스에 편입해 정형 데이터와 함께 조회합니다.
+
+Agent 입장에서 문서 근거를 얻는 길은 두 갈래입니다.
+
+| 경로 | 적합한 경우 | 유의점 |
+|---|---|---|
+| Vector DB 직접 조회 | 청크 벡터를 그대로 받아 Agent가 리랭킹·조합을 직접 제어해야 할 때 | 권한 필터를 Agent가 빠뜨리면 통제가 우회됨 |
+| Argus RAG API 호출 | 검색·리랭킹·권한 필터·근거 인용을 Studio 정책에 맡길 때 | 응답 형식과 인용 규칙이 Studio에 종속 |
+
+수치와 문서를 한 질의에서 묶어야 하면 어느 쪽도 아닌 Trino 경유입니다.
 
 ### 모델 서빙 — 고객 보유 모델
 
@@ -253,8 +265,9 @@ Agent가 자체 계정으로 조회하면 권한 통제가 무력화되므로, *
 | Agent ↔ 6 | 자주 실선 (양방향) | MCP 도구 호출 | Agent가 메타데이터를 조회하고 SQL을 실행. Federation 덕분에 원천 메타데이터가 한 지점에 모임 |
 | Agent → 모델 서빙 | 청록 실선 | 추론 호출 | 답변 생성과 임베딩에 Starburst와 같은 내부 엔드포인트를 사용 |
 | 4 → RAG | 파랑 실선 | 문서 원본 조회 | `s3a://lake/docs/` 를 S3 API로 직접 읽음. 문서 원본은 SQL 대상이 아니고 파싱은 파일 단위 병렬이 유리 |
-| RAG → Vector DB | 실선 | 임베딩 upsert | 청크 벡터와 메타데이터를 색인에 적재. 신규·변경 문서만 증분 |
-| Vector DB → Agent | 자주 실선 | 유사도 검색 | Agent의 문서 검색 도구가 Top-K 근거 청크를 조회 |
+| RAG ↔ Vector DB | 양방향 실선 | 임베딩 upsert · 검색 | 색인 시 청크 벡터와 메타데이터를 적재하고, API 처리 시 유사도 검색 |
+| Vector DB → Agent | 자주 실선 | Vector DB 직접 조회 | Agent의 문서 검색 도구가 Top-K 근거 청크를 직접 조회 |
+| Agent ↔ RAG | 자주 실선 (양방향) | Argus RAG API 호출 | `retrieve`·`query` 호출. 검색·리랭킹·권한 필터·근거 인용을 Studio가 처리 |
 | Vector DB ↔ 6 | 양방향 실선 | 벡터 테이블 조회 | Trino의 Vector DB 커넥터로 벡터와 정형 데이터를 한 질의에서 결합 |
 
 ### 조회 경로 선택 기준
@@ -263,7 +276,7 @@ Agent가 자체 계정으로 조회하면 권한 통제가 무력화되므로, *
 행 수가 많고 SQL 연산이 적다   →  4 → 7  (S3 직접 접근)
 행 수가 적고 SQL 연산이 무겁다  →  6 → 7  (Trino 경유)
 원천의 최신 상태가 필요하다     →  1 → 6  (페더레이션)
-문서 근거가 필요하다            →  Vector DB → Agent (RAG 검색)
+문서 근거가 필요하다            →  Vector DB → Agent (직접 조회) 또는 Agent ↔ RAG (Argus RAG API)
 문서와 수치를 함께 묶는다       →  Vector DB → 6 → 7 (Trino 경유)
 ```
 
@@ -305,7 +318,7 @@ URL은 폐쇄망 DNS에서 해석되지 않는 경우가 많습니다.
 python scripts/generate_architecture_svg.py
 ```
 
-SVG와 PNG(4360 x 3120)가 함께 생성됩니다. PNG 래스터화에는 시스템에 설치된 렌더러
+SVG와 PNG(4360 x 3240)가 함께 생성됩니다. PNG 래스터화에는 시스템에 설치된 렌더러
 (rsvg-convert · Inkscape · Chromium · CairoSVG · ImageMagick 중 하나)를 사용하며,
 자세한 옵션은 [README](../README.md#png-렌더러)를 참고하십시오.
 
@@ -402,6 +415,7 @@ SVG와 PNG(4360 x 3120)가 함께 생성됩니다. PNG 래스터화에는 시스
 | 용어 | 설명 |
 |---|---|
 | RAG | Retrieval-Augmented Generation. 질문과 관련된 문서를 검색해 근거로 제공한 뒤 답변을 생성하는 방식 |
+| Argus RAG Studio | 문서 파싱·청킹·임베딩·색인 파이프라인과 검색(`retrieve`)·답변(`query`) API를 제공하는 RAG 플랫폼 |
 | 청킹 (chunking) | 긴 문서를 검색 단위로 잘라내는 것. 조각마다 출처와 메타데이터를 붙입니다 |
 | 임베딩 (embedding) | 텍스트를 의미를 담은 숫자 벡터로 변환하는 것. 유사도 검색의 기준값이 됩니다 |
 | Vector DB | 임베딩 벡터와 메타데이터를 저장하고 유사도 검색을 제공하는 저장소 |
