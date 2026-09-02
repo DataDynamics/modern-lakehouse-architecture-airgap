@@ -34,6 +34,7 @@
 │   ├── architecture-rationale.md         제안 아키텍처의 특징과 선택 근거
 │   ├── solutions.md                      솔루션별 역할과 담당 범위
 │   ├── solution-features.md              솔루션별 주요 기능 목록 (공식 문서 기준)
+│   ├── solution-feature-tables.md        솔루션별 기능표 (제품마다 표 하나)
 │   ├── solution-runtimes.md              솔루션별 동작 환경과 배포 방식
 │   └── agent-readiness-analysis.md       Agent 대상 데이터 제공 요건 분석
 └── scripts/
@@ -65,7 +66,8 @@
 
 상세 설명은 [docs/architecture.md](docs/architecture.md), 각 솔루션이 이 아키텍처에서
 담당하는 역할은 [docs/solutions.md](docs/solutions.md), 공식 문서에서 확인한 제품별 기능
-목록은 [docs/solution-features.md](docs/solution-features.md), 동작 환경과 배포 방식은
+목록은 [docs/solution-features.md](docs/solution-features.md), 제품마다 표 하나로 합친
+기능표는 [docs/solution-feature-tables.md](docs/solution-feature-tables.md), 동작 환경과 배포 방식은
 [docs/solution-runtimes.md](docs/solution-runtimes.md)를 참고하십시오.
 
 ## 기능 개요도 (간략판)
