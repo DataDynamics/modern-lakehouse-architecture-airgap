@@ -33,7 +33,7 @@ from xml.sax.saxutils import escape
 # --------------------------------------------------------------------------
 
 CANVAS_W = 2180
-CANVAS_H = 1620
+CANVAS_H = 1670
 BACKGROUND = "#FFFFFF"
 
 FONT_STACK = (
@@ -44,8 +44,8 @@ FONT_STACK = (
 TITLE = "Lakehouse Reference Architecture"
 SUBTITLE = (
     "Cloudera CFM \u00b7 CDP \u00b7 CDE  |  Starburst Trino  |  MinIO  |  "
-    "Spotfire \u00b7 Cloudera AI  |  Argus RAG Studio \u00b7 Vector DB  |  "
-    "\uace0\uac1d AI Agent"
+    "Spotfire \u00b7 Cloudera AI  |  Argus RAG Studio \u00b7 Argus Catalog "
+    "\u00b7 Vector DB  |  \uace0\uac1d AI Agent"
 )
 
 # --------------------------------------------------------------------------
@@ -75,6 +75,7 @@ PALETTE = {
     "rose": Ramp("#FBEBF0", "#9B2D4F", "#450F21", "#6E1F38", "#9B2D4F", "#E294AC"),
     "plum": Ramp("#F6E9F7", "#7B2E86", "#350E3A", "#551F5D", "#7B2E86", "#CE97D6"),
     "steel": Ramp("#E9EEF2", "#3E5D72", "#12242E", "#26414F", "#3E5D72", "#9BB3C2"),
+    "olive": Ramp("#F3F1DC", "#6B6414", "#2C2A05", "#4A4509", "#6B6414", "#CFC760"),
 }
 
 INK = "#5F5E5A"          # neutral flow lines
@@ -83,6 +84,7 @@ DIRECT = "#185FA5"       # S3 direct access
 FEDERATE = "#534AB7"     # source-level federation
 MODEL = "#0C6480"        # inference model call
 AGENT = "#9B2D4F"        # agent tool call
+CATALOG = "#6B6414"      # metadata sync / lineage (dashed)
 HAIRLINE = "#D3D1C7"
 
 # Vertical rhythm inside a box
@@ -343,10 +345,35 @@ BOXES: list[Box] = [
             Group("도구 (MCP)", [
                 "├ Starburst MCP Server",
                 "├ 문서 검색 (Vector DB · RAG API)",
-                "└ Knowledge Graph 조회",
+                "└ Argus Catalog (스키마 · 리니지) · KG",
             ]),
             Group("감사", [
                 "질문 → 근거 → SQL → 답변 기록",
+            ]),
+        ],
+    ),
+    Box(
+        key="catalog", x=360, y=1050, w=300, h=420, ramp="olive",
+        title="Argus Catalog",
+        subtitle="Data Catalog (FastAPI :4600) · Next.js UI",
+        blocks=[
+            Group("데이터 카탈로그", [
+                "데이터셋 · 스키마 · 태그 · 소유자",
+                "컬럼 리니지 · ERD · 표준 · 용어집",
+            ]),
+            Group("메타데이터 수집 (11종 플랫폼)", [
+                "Trino · Hive · Kafka · S3 · Oracle · PG",
+                "Metadata Sync (:4610) · Query Listener",
+            ]),
+            Group("데이터 품질", [
+                "프로파일링 · 규칙 10종 · 점수 전파",
+            ]),
+            Group("거버넌스 · 검색", [
+                "API · AI Agent 카탈로그 (도구 · MCP)",
+                "하이브리드 검색 (pgvector) · 변경 관리",
+            ]),
+            Group("ML 모델 레지스트리", [
+                "MLflow · OCI 호환 · 에어갭 모델 반입",
             ]),
         ],
     ),
@@ -472,6 +499,17 @@ EDGES: list[Edge] = [
     Edge("M1265 1042 V978", both=True,
          label="\ubca1\ud130 \ud14c\uc774\ube14 \uc870\ud68c",
          label_xy=(1278, 1022)),
+    # Data catalog: NiFi / Trino -> Argus Catalog -> AI Agent
+    Edge("M600 750 V1042", CATALOG, "3 3",
+         label="NiFi Flow \ub9ac\ub2c8\uc9c0 \u00b7 \uba54\ud0c0\ub370\uc774\ud130",
+         label_xy=(418, 850)),
+    Edge("M1140 974 V1015 H700 V1120 H668", CATALOG, "3 3",
+         label="Trino Query Listener \u00b7 Metadata Sync",
+         label_xy=(905, 1008)),
+    Edge("M2100 772 V1522 H510 V1474", CATALOG, "3 3", both=True,
+         label="Agent \ub4f1\ub85d \u00b7 \ubbf8\ud130\ub9c1 \u00b7 "
+               "\uba54\ud0c0\ub370\uc774\ud130 API (URN)",
+         label_xy=(700, 1541)),
 ]
 
 LEGEND = [
@@ -483,14 +521,19 @@ LEGEND = [
     "\uc0ac\ub0b4 \ubaa8\ub378",
     "RAG \uacbd\ub85c : MinIO s3a://lake/docs/ \u2192 Argus RAG Studio "
     "\u2192 Vector DB \u2192 AI Agent (\uc9c1\uc811 \uc870\ud68c \ub610\ub294 "
-    "Argus REST API) \u00b7 Starburst Trino",
+    "Argus REST API) \u00b7 Starburst Trino   |   "
+    "\uce74\ud0c8\ub85c\uadf8 \uacbd\ub85c : NiFi \u00b7 Trino \u2192 "
+    "Argus Catalog (\uba54\ud0c0\ub370\uc774\ud130 \u00b7 \ub9ac\ub2c8\uc9c0) "
+    "\u2194 AI Agent",
     "\uc2e4\uc120 = \uc0c1\uc2dc \ub370\uc774\ud130 \ud750\ub984   \u00b7   "
     "\uc8fc\ud669 \uc810\uc120 = \uc2a4\ud2b8\ub9ac\ubc0d \uacbd\ub85c   \u00b7   "
     "\ud30c\ub791 \uc2e4\uc120 = S3 \uc9c1\uc811 \uc811\uadfc   \u00b7   "
     "\ubcf4\ub77c \uc77c\uc810\uc1c4\uc120 = \uc6d0\ucc9c \uc9c1\uc811 "
     "\ud398\ub354\ub808\uc774\uc158   \u00b7   "
     "\uccad\ub85d \uc2e4\uc120 = \ubaa8\ub378 \ud638\ucd9c   \u00b7   "
-    "\uc790\uc8fc \uc2e4\uc120 = Agent \ub3c4\uad6c \ud638\ucd9c",
+    "\uc790\uc8fc \uc2e4\uc120 = Agent \ub3c4\uad6c \ud638\ucd9c   \u00b7   "
+    "\uc62c\ub9ac\ube0c \uc810\uc120 = \uba54\ud0c0\ub370\uc774\ud130 "
+    "\uc218\uc9d1 \u00b7 \ub9ac\ub2c8\uc9c0",
 ]
 
 # --------------------------------------------------------------------------
@@ -600,7 +643,10 @@ def build() -> str:
         'agent reaches the vectors either by querying the vector '
         'database directly or through the Argus REST API (search, '
         'query, chat); Starburst Trino exposes the same vectors as '
-        'tables.</desc>',
+        'tables. Argus Catalog, the data catalog, collects metadata '
+        'and lineage from NiFi flows and Trino queries and serves '
+        'schemas, lineage and an AI agent registry to the customer '
+        'agent.</desc>',
         '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" '
         'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
         '<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" '
@@ -617,10 +663,10 @@ def build() -> str:
     for box in BOXES:
         parts += render_box(box)
 
-    parts.append(f'<line x1="40" y1="1530" x2="{CANVAS_W - 40}" y2="1530" '
+    parts.append(f'<line x1="40" y1="1580" x2="{CANVAS_W - 40}" y2="1580" '
                  f'stroke="{HAIRLINE}" stroke-width="0.9"/>')
     for i, line in enumerate(LEGEND):
-        parts.append(text(40, 1550 + i * 18, line, 11, "#888780"))
+        parts.append(text(40, 1600 + i * 18, line, 11, "#888780"))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 

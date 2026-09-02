@@ -49,6 +49,7 @@
 | 6 | Data Federation | Starburst Trino |
 | 7 | Consumption | Spotfire, Cloudera AI, SQL Client, Notebook |
 | + | RAG | [Argus RAG Studio](https://github.com/DataDynamics-OSS/argus-rag-studio) — 인제스천 파이프라인 · 하이브리드 검색 · 생성 · 평가 · REST API |
+| + | Data Catalog | [Argus Catalog](https://github.com/DataDynamics-OSS/argus-catalog) — 메타데이터 · 리니지 · 품질 · API/AI Agent 카탈로그 · 모델 레지스트리 |
 | + | Vector DB | PostgreSQL + pgvector (기본), Qdrant · Weaviate · Milvus 교체 가능 |
 | + | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환) + 고객 보유 모델 |
 | + | AI Agent | 고객 AI Agent — Starburst MCP 도구, 권한 위임, 감사 |
@@ -74,7 +75,7 @@ SVG와 PNG가 항상 함께 생성됩니다.
 
 ```
 assets/lakehouse-architecture-lr.svg    벡터 (문서 삽입 · 확대)
-assets/lakehouse-architecture-lr.png    래스터 4360 x 3240 (발표자료 · 이슈 첨부)
+assets/lakehouse-architecture-lr.png    래스터 4360 x 3340 (발표자료 · 이슈 첨부)
 ```
 
 | 옵션 | 설명 |
@@ -133,7 +134,7 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 |---|---|
 | 폐쇄망 (air-gapped) | 외부 인터넷과 물리적·논리적으로 분리된 망. 외부 서비스 호출과 온라인 패키지 설치가 불가하므로, 모든 구성요소를 내부에 배치하고 설치 미디어를 반입해 공급해야 합니다 |
 | Lakehouse | 데이터 레이크의 저비용 대용량 저장과 데이터 웨어하우스의 테이블·트랜잭션 특성을 한 저장소에서 함께 제공하는 아키텍처 |
-| Layer | 이 아키텍처의 논리 구획 단위. 좌에서 우로 Data Source → Ingestion → Streaming Bus → Storage → Processing & Orchestration → Data Federation → Consumption 7개로 구성됩니다. 하단의 Argus RAG Studio · Vector DB와 우측의 모델 서빙 · AI Agent는 이 7개 Layer를 뒷받침하는 부속 구성요소입니다 |
+| Layer | 이 아키텍처의 논리 구획 단위. 좌에서 우로 Data Source → Ingestion → Streaming Bus → Storage → Processing & Orchestration → Data Federation → Consumption 7개로 구성됩니다. 하단의 Argus Catalog · Argus RAG Studio · Vector DB와 우측의 모델 서빙 · AI Agent는 이 7개 Layer를 뒷받침하는 부속 구성요소입니다 |
 | 계정계 · 정보계 | 금융 IT의 전통적 구분. 계정계는 예금·여신 등 거래를 처리하는 원장 시스템, 정보계는 계정계 데이터를 분석 목적으로 재구성한 시스템 |
 | 대외계 | 금융결제원, 신용정보원 등 외부 기관과 전문을 주고받는 시스템 |
 
@@ -156,6 +157,7 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 | Spotfire | 시각화 기반 분석 플랫폼. 대시보드와 Ad-hoc 분석에 사용 |
 | Cloudera AI | 모델 학습·서빙과 AI 에이전트를 제공하는 Cloudera 제품 |
 | Argus RAG Studio | RAG 파이프라인의 구축·검색/생성·평가·운영·배포를 한 곳에서 다루는 Data Dynamics의 오픈소스 플랫폼 (Apache-2.0). FastAPI 백엔드와 Next.js UI, 에이전트 기반 원격 배포로 구성 |
+| Argus Catalog | DataHub 스타일 데이터 카탈로그와 Unity Catalog 호환 ML 모델 레지스트리를 하나로 묶은 Data Dynamics의 오픈소스 메타데이터 플랫폼 (Apache-2.0). 폐쇄망을 전제로 설계 |
 | pgvector | PostgreSQL에 벡터 타입과 유사도 인덱스(HNSW 등)를 추가하는 확장. Argus RAG Studio의 기본 벡터 저장소 |
 | Elasticsearch | 문서 검색 엔진. 한국어 형태소 분석(Nori)과 kNN 벡터 검색을 함께 제공합니다 |
 
@@ -174,3 +176,6 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 | 임베딩 (embedding) | 텍스트를 의미를 담은 숫자 벡터로 변환하는 것. 유사도 검색의 기준값이 됩니다 |
 | Vector DB | 임베딩 벡터와 메타데이터를 저장하고 유사도 검색을 제공하는 저장소 |
 | Top-K 검색 | 질의 벡터와 가장 가까운 K개의 청크를 찾아 반환하는 검색 |
+| 리니지 (lineage) | 데이터가 어디서 와서 어떤 처리를 거쳐 어디로 가는지의 계보. 컬럼 수준까지 추적하면 영향 분석과 감사 재현에 쓸 수 있습니다 |
+| Query Listener | Trino의 EventListener SPI로 실행된 질의의 입출력 테이블·컬럼을 받아 리니지를 만드는 Argus Catalog 확장 |
+| URN | Uniform Resource Name. Argus Catalog가 데이터셋·API·모델 같은 자산을 식별하는 고유 이름 |

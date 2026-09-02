@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2180" height="1620" viewBox="0 0 2180 1620" role="img" font-family="'Pretendard','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR','Segoe UI',sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="2180" height="1670" viewBox="0 0 2180 1670" role="img" font-family="'Pretendard','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR','Segoe UI',sans-serif">
 <title>Lakehouse Reference Architecture</title>
-<desc>Air-gapped modern lakehouse reference architecture, left to right: financial data sources, Cloudera CFM ingestion, Cloudera CDP streaming bus, MinIO storage with Iceberg, Cloudera CDE processing, Starburst Trino federation with an on-premises model provider, consumption, a customer AI agent calling Starburst over MCP, and internally served customer models. Along the bottom, Argus RAG Studio reads document originals from the MinIO docs zone over the S3 API, parses, chunks and embeds them, and writes the embeddings into a vector database (PostgreSQL + pgvector by default). The AI agent reaches the vectors either by querying the vector database directly or through the Argus REST API (search, query, chat); Starburst Trino exposes the same vectors as tables.</desc>
+<desc>Air-gapped modern lakehouse reference architecture, left to right: financial data sources, Cloudera CFM ingestion, Cloudera CDP streaming bus, MinIO storage with Iceberg, Cloudera CDE processing, Starburst Trino federation with an on-premises model provider, consumption, a customer AI agent calling Starburst over MCP, and internally served customer models. Along the bottom, Argus RAG Studio reads document originals from the MinIO docs zone over the S3 API, parses, chunks and embeds them, and writes the embeddings into a vector database (PostgreSQL + pgvector by default). The AI agent reaches the vectors either by querying the vector database directly or through the Argus REST API (search, query, chat); Starburst Trino exposes the same vectors as tables. Argus Catalog, the data catalog, collects metadata and lineage from NiFi flows and Trino queries and serves schemas, lineage and an AI agent registry to the customer agent.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-<rect x="0" y="0" width="2180" height="1620" fill="#FFFFFF"/>
+<rect x="0" y="0" width="2180" height="1670" fill="#FFFFFF"/>
 <text x="40" y="48" font-size="22" font-weight="500" fill="#2C2C2A">Lakehouse Reference Architecture</text>
-<text x="40" y="72" font-size="13" fill="#5F5E5A">Cloudera CFM · CDP · CDE  |  Starburst Trino  |  MinIO  |  Spotfire · Cloudera AI  |  Argus RAG Studio · Vector DB  |  고객 AI Agent</text>
+<text x="40" y="72" font-size="13" fill="#5F5E5A">Cloudera CFM · CDP · CDE  |  Starburst Trino  |  MinIO  |  Spotfire · Cloudera AI  |  Argus RAG Studio · Argus Catalog · Vector DB  |  고객 AI Agent</text>
 <path d="M165 260 V100 H700 V200 H722" fill="none" stroke="#993C1D" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
 <text x="340" y="120" font-size="11" fill="#993C1D">실시간 이벤트 직결 : CDC · MQ · 채널 로그 · FDS</text>
 <path d="M290 505 H352" fill="none" stroke="#5F5E5A" stroke-width="1.6" marker-end="url(#arrow)"/>
@@ -37,6 +37,12 @@
 <text x="1300" y="1492" font-size="11" fill="#9B2D4F">Argus REST API (search · query · chat) · API 키</text>
 <path d="M1265 1042 V978" fill="none" stroke="#5F5E5A" stroke-width="1.6" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="1278" y="1022" font-size="11" fill="#5F5E5A">벡터 테이블 조회</text>
+<path d="M600 750 V1042" fill="none" stroke="#6B6414" stroke-width="1.6" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+<text x="418" y="850" font-size="11" fill="#6B6414">NiFi Flow 리니지 · 메타데이터</text>
+<path d="M1140 974 V1015 H700 V1120 H668" fill="none" stroke="#6B6414" stroke-width="1.6" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+<text x="905" y="1008" font-size="11" fill="#6B6414">Trino Query Listener · Metadata Sync</text>
+<path d="M2100 772 V1522 H510 V1474" fill="none" stroke="#6B6414" stroke-width="1.6" stroke-dasharray="3 3" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="700" y="1541" font-size="11" fill="#6B6414">Agent 등록 · 미터링 · 메타데이터 API (URN)</text>
 <rect x="40" y="260" width="250" height="490" rx="12" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.9"/>
 <text x="58" y="292" font-size="15" font-weight="500" fill="#2C2C2A">1. Data Source Layer</text>
 <text x="58" y="313" font-size="12.5" fill="#888780">금융권 원천 시스템</text>
@@ -176,9 +182,26 @@
 <text x="1868" y="608" font-size="12.5" font-weight="500" fill="#450F21">도구 (MCP)</text>
 <text x="1882" y="629" font-size="11.5" fill="#6E1F38">├ Starburst MCP Server</text>
 <text x="1882" y="648" font-size="11.5" fill="#6E1F38">├ 문서 검색 (Vector DB · RAG API)</text>
-<text x="1882" y="667" font-size="11.5" fill="#6E1F38">└ Knowledge Graph 조회</text>
+<text x="1882" y="667" font-size="11.5" fill="#6E1F38">└ Argus Catalog (스키마 · 리니지) · KG</text>
 <text x="1868" y="701" font-size="12.5" font-weight="500" fill="#450F21">감사</text>
 <text x="1882" y="722" font-size="11.5" fill="#6E1F38">질문 → 근거 → SQL → 답변 기록</text>
+<rect x="360" y="1050" width="300" height="420" rx="12" fill="#F3F1DC" stroke="#6B6414" stroke-width="0.9"/>
+<text x="378" y="1082" font-size="15" font-weight="500" fill="#2C2A05">Argus Catalog</text>
+<text x="378" y="1103" font-size="12.5" fill="#6B6414">Data Catalog (FastAPI :4600) · Next.js UI</text>
+<line x1="378" y1="1118" x2="642" y2="1118" stroke="#CFC760" stroke-width="0.9"/>
+<text x="378" y="1144" font-size="12.5" font-weight="500" fill="#2C2A05">데이터 카탈로그</text>
+<text x="392" y="1165" font-size="11.5" fill="#4A4509">데이터셋 · 스키마 · 태그 · 소유자</text>
+<text x="392" y="1184" font-size="11.5" fill="#4A4509">컬럼 리니지 · ERD · 표준 · 용어집</text>
+<text x="378" y="1218" font-size="12.5" font-weight="500" fill="#2C2A05">메타데이터 수집 (11종 플랫폼)</text>
+<text x="392" y="1239" font-size="11.5" fill="#4A4509">Trino · Hive · Kafka · S3 · Oracle · PG</text>
+<text x="392" y="1258" font-size="11.5" fill="#4A4509">Metadata Sync (:4610) · Query Listener</text>
+<text x="378" y="1292" font-size="12.5" font-weight="500" fill="#2C2A05">데이터 품질</text>
+<text x="392" y="1313" font-size="11.5" fill="#4A4509">프로파일링 · 규칙 10종 · 점수 전파</text>
+<text x="378" y="1347" font-size="12.5" font-weight="500" fill="#2C2A05">거버넌스 · 검색</text>
+<text x="392" y="1368" font-size="11.5" fill="#4A4509">API · AI Agent 카탈로그 (도구 · MCP)</text>
+<text x="392" y="1387" font-size="11.5" fill="#4A4509">하이브리드 검색 (pgvector) · 변경 관리</text>
+<text x="378" y="1421" font-size="12.5" font-weight="500" fill="#2C2A05">ML 모델 레지스트리</text>
+<text x="392" y="1442" font-size="11.5" fill="#4A4509">MLflow · OCI 호환 · 에어갭 모델 반입</text>
 <rect x="730" y="1050" width="300" height="420" rx="12" fill="#F6E9F7" stroke="#7B2E86" stroke-width="0.9"/>
 <text x="748" y="1082" font-size="15" font-weight="500" fill="#350E3A">Argus RAG Studio</text>
 <text x="748" y="1103" font-size="12.5" fill="#7B2E86">RAG 백엔드 (FastAPI :4700) · Next.js UI</text>
@@ -214,8 +237,8 @@
 <text x="1132" y="1406" font-size="11.5" fill="#26414F">├ Argus RAG Studio (색인 · 검색)</text>
 <text x="1132" y="1425" font-size="11.5" fill="#26414F">├ AI Agent (직접 조회)</text>
 <text x="1132" y="1444" font-size="11.5" fill="#26414F">└ Starburst Trino (PostgreSQL 커넥터)</text>
-<line x1="40" y1="1530" x2="2140" y2="1530" stroke="#D3D1C7" stroke-width="0.9"/>
-<text x="40" y="1550" font-size="11" fill="#888780">배치 경로 : Source → CFM → MinIO   |   실시간 경로 : Source / CFM → Kafka(CDP) → CDE Spark Streaming → MinIO   |   조회 경로 : Starburst Trino → Spotfire · Cloudera AI   |   Agent 경로 : AI Agent → MCP → Starburst → 사내 모델</text>
-<text x="40" y="1568" font-size="11" fill="#888780">RAG 경로 : MinIO s3a://lake/docs/ → Argus RAG Studio → Vector DB → AI Agent (직접 조회 또는 Argus REST API) · Starburst Trino</text>
-<text x="40" y="1586" font-size="11" fill="#888780">실선 = 상시 데이터 흐름   ·   주황 점선 = 스트리밍 경로   ·   파랑 실선 = S3 직접 접근   ·   보라 일점쇄선 = 원천 직접 페더레이션   ·   청록 실선 = 모델 호출   ·   자주 실선 = Agent 도구 호출</text>
+<line x1="40" y1="1580" x2="2140" y2="1580" stroke="#D3D1C7" stroke-width="0.9"/>
+<text x="40" y="1600" font-size="11" fill="#888780">배치 경로 : Source → CFM → MinIO   |   실시간 경로 : Source / CFM → Kafka(CDP) → CDE Spark Streaming → MinIO   |   조회 경로 : Starburst Trino → Spotfire · Cloudera AI   |   Agent 경로 : AI Agent → MCP → Starburst → 사내 모델</text>
+<text x="40" y="1618" font-size="11" fill="#888780">RAG 경로 : MinIO s3a://lake/docs/ → Argus RAG Studio → Vector DB → AI Agent (직접 조회 또는 Argus REST API) · Starburst Trino   |   카탈로그 경로 : NiFi · Trino → Argus Catalog (메타데이터 · 리니지) ↔ AI Agent</text>
+<text x="40" y="1636" font-size="11" fill="#888780">실선 = 상시 데이터 흐름   ·   주황 점선 = 스트리밍 경로   ·   파랑 실선 = S3 직접 접근   ·   보라 일점쇄선 = 원천 직접 페더레이션   ·   청록 실선 = 모델 호출   ·   자주 실선 = Agent 도구 호출   ·   올리브 점선 = 메타데이터 수집 · 리니지</text>
 </svg>

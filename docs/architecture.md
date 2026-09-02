@@ -1,8 +1,8 @@
 # Modern Lakehouse Architecture (Air-gapped)
 
 폐쇄망 환경의 금융권 Lakehouse 참조 아키텍처입니다. 좌에서 우로 데이터가 흐르며,
-7개 Layer와 이를 뒷받침하는 Argus RAG Studio · Vector DB · 모델 서빙 · 고객 AI Agent
-구성요소, 그리고 이들을 잇는 19개의 경로로 구성됩니다.
+7개 Layer와 이를 뒷받침하는 Argus Catalog · Argus RAG Studio · Vector DB · 모델 서빙 ·
+고객 AI Agent 구성요소, 그리고 이들을 잇는 22개의 경로로 구성됩니다.
 
 ![Lakehouse Reference Architecture](../assets/lakehouse-architecture-lr.svg)
 
@@ -17,6 +17,7 @@
   - [5. Processing & Orchestration Layer — Cloudera CDE](#5-processing--orchestration-layer--cloudera-cde)
   - [6. Data Federation Layer — Starburst Trino](#6-data-federation-layer--starburst-trino)
   - [7. Consumption Layer](#7-consumption-layer)
+  - [Data Catalog — Argus Catalog](#data-catalog--argus-catalog)
   - [RAG — Argus RAG Studio](#rag--argus-rag-studio)
   - [Vector DB — 임베딩 인덱스 저장소](#vector-db--임베딩-인덱스-저장소)
   - [모델 서빙 — 고객 보유 모델](#모델-서빙--고객-보유-모델)
@@ -44,6 +45,7 @@
 | Processing & Orchestration | Cloudera CDE — Airflow, Spark on Kubernetes |
 | Data Federation | Starburst Trino |
 | Consumption | Spotfire, Cloudera AI |
+| Data Catalog | Argus Catalog (메타데이터 · 리니지 · 품질 · 모델 레지스트리) |
 | RAG | Argus RAG Studio (파이프라인 + 검색 API) |
 | Vector DB | PostgreSQL + pgvector (기본) — Qdrant · Weaviate · Milvus 교체 가능 |
 | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환 엔드포인트) + 고객 보유 모델 |
@@ -175,6 +177,54 @@ Argus RAG Studio의 기본값인 PostgreSQL + pgvector이며, Trino는 PostgreSQ
 성격이 다른 두 소비 패턴이 공존합니다. 집계 결과 조회는 Trino를, 대용량 학습 데이터는
 스토리지 직접 접근을 사용합니다.
 
+### Data Catalog — Argus Catalog
+
+여러 Layer에 흩어진 자산의 메타데이터를 한곳에 모으는 구성요소입니다. 데이터 흐름에는
+끼어들지 않고 각 시스템에서 메타데이터와 리니지만 수집하므로, 다이어그램에서 다른
+상자와 점선으로만 연결됩니다.
+
+[Argus Catalog](https://github.com/DataDynamics-OSS/argus-catalog)는 DataHub 스타일
+데이터 카탈로그와 Unity Catalog OSS 호환 ML 모델 레지스트리를 하나로 묶은 Data
+Dynamics의 오픈소스(Apache-2.0) 메타데이터 플랫폼입니다. FastAPI 백엔드(:4600)와
+Next.js UI, PostgreSQL + pgvector로 구성되며, 폐쇄망을 전제로 설계되었습니다.
+
+- **데이터 카탈로그** — 데이터셋·스키마·태그·소유자(Technical / Business / Data Steward),
+  컬럼 수준 리니지와 DDL 기반 ERD, 데이터 표준·용어집(형태소 분석 기반 자동 생성, 준수율)
+- **메타데이터 수집** — Trino · Hive · Impala · Kafka · S3 · HDFS · Oracle · PostgreSQL ·
+  Elasticsearch 등 11종 플랫폼. **Metadata Sync** 서비스(:4610, 상시 또는 배치)가 스키마 ·
+  키 · DDL · 행 수를 동기화하고 변경분을 스냅샷으로 남김
+- **리니지 수집** — **Trino Query Listener**(EventListener SPI)가 실행된 질의의 입출력
+  테이블·컬럼을 그대로 보고. Hive Query Hook · Impala Query Agent, 그리고 NiFi Flow ·
+  Airflow DAG 파이프라인 자동 등록
+- **데이터 품질** — 소스 직접 프로파일링, 규칙 10종 검증, GOOD / WARN / BAD 점수와
+  리니지 업스트림 전파 경고
+- **거버넌스** — OpenAPI 스펙 **API 카탈로그**, **AI Agent 카탈로그**(에이전트 등록 · 도구/MCP
+  서버 · 리니지 · 평가 · 호출 미터링 · 정책 번들), Temporal 기반 변경 관리
+- **ML 모델 레지스트리** — MLflow · OCI 호환, Stage 관리, 모델 카드, `argus-model` CLI로
+  외부 모델을 에어갭으로 반입
+- **검색 · AI** — pgvector 하이브리드 검색, LLM 기반 메타데이터 자동 생성(설명 · 태그 ·
+  PII 감지), tool-use AI 어시스턴트
+
+이 아키텍처에서 자리를 잡는 방식은 다음과 같습니다.
+
+| Argus Catalog 기능 | 이 아키텍처에서의 대응 |
+|---|---|
+| Trino 플랫폼 동기화 + Query Listener | 6번 Layer. Trino가 페더레이션하는 원천(Oracle · Hive · Kafka · Iceberg)의 메타데이터를 한 번에 수집하고, 실행 질의에서 리니지를 얻음 |
+| NiFi Flow 등록 | 2번 Layer의 CFM. 수집 흐름을 파이프라인 자산으로 등록 |
+| Airflow DAG 등록 | 5번 Layer의 CDE. Bronze → Silver → Gold 변환의 리니지 |
+| S3 · Kafka 플랫폼 동기화 | 4번 · 3번 Layer. 필요 시 Trino를 거치지 않고 직접 동기화 |
+| AI Agent 카탈로그 | 고객 AI Agent를 등록하고 도구/MCP · 호출 지표를 거버넌스 |
+| External API (URN 기반 메타데이터 · Avro 스키마) | Agent가 질의 계획 전에 스키마 · 리니지 · 용어집을 조회 |
+| ML 모델 레지스트리 + 에어갭 반입 | 모델 서빙 상자의 고객 보유 모델을 반입 · 버전 관리 |
+| LLM 프로바이더 (OpenAI 호환) | 모델 서빙 상자의 Cloudera AI Inference |
+
+다이어그램에서는 NiFi → Catalog, Trino → Catalog, Catalog ↔ Agent 세 경로만 그렸습니다.
+S3 · Kafka · Airflow 동기화는 Trino 경유 수집과 겹치므로 선을 생략했습니다.
+
+> **설계 주의** Query Listener는 Trino Coordinator 플러그인이므로 Starburst 업그레이드
+> 시 SPI 호환성을 함께 검증해야 합니다. 리니지가 끊기면 품질 전파 경고와 영향 분석이
+> 침묵하므로, 수집 지연을 알림 규칙으로 감시하십시오.
+
 ### RAG — Argus RAG Studio
 
 Storage Layer의 `docs/` 존에 쌓인 비정형 문서를 Agent가 근거로 쓸 수 있는 형태로
@@ -291,6 +341,9 @@ Agent가 자체 계정으로 조회하면 권한 통제가 무력화되므로, *
 | Vector DB → Agent | 자주 실선 | Vector DB 직접 조회 | Agent의 문서 검색 도구가 Top-K 근거 청크를 직접 조회 |
 | Agent ↔ RAG | 자주 실선 (양방향) | Argus REST API 호출 | `search` · `query` · `chat` 호출(API 키). 하이브리드 검색·리랭킹·인용·트레이스를 Studio가 처리 |
 | Vector DB ↔ 6 | 양방향 실선 | 벡터 테이블 조회 | Trino의 PostgreSQL 커넥터로 pgvector 테이블과 정형 데이터를 한 질의에서 결합 |
+| 2 → Catalog | 올리브 점선 | NiFi Flow 리니지 | CFM 수집 흐름을 파이프라인 자산으로 등록. 원천 → Bronze 구간의 리니지 |
+| 6 → Catalog | 올리브 점선 | Trino Query Listener · Metadata Sync | 페더레이션된 모든 원천의 메타데이터를 한 번에 동기화하고, 실행 질의에서 컬럼 수준 리니지를 수집 |
+| Agent ↔ Catalog | 올리브 점선 (양방향) | Agent 등록 · 미터링 · 메타데이터 API | Agent는 URN 기반 External API로 스키마·리니지·용어집을 조회하고, 자신을 AI Agent 카탈로그에 등록해 호출 지표를 보고 |
 
 ### 조회 경로 선택 기준
 
@@ -340,7 +393,7 @@ URL은 폐쇄망 DNS에서 해석되지 않는 경우가 많습니다.
 python scripts/generate_architecture_svg.py
 ```
 
-SVG와 PNG(4360 x 3240)가 함께 생성됩니다. PNG 래스터화에는 시스템에 설치된 렌더러
+SVG와 PNG(4360 x 3340)가 함께 생성됩니다. PNG 래스터화에는 시스템에 설치된 렌더러
 (rsvg-convert · Inkscape · Chromium · CairoSVG · ImageMagick 중 하나)를 사용하며,
 자세한 옵션은 [README](../README.md#png-렌더러)를 참고하십시오.
 
@@ -441,6 +494,10 @@ SVG와 PNG(4360 x 3240)가 함께 생성됩니다. PNG 래스터화에는 시스
 | 소스 워치 | Argus RAG Studio가 등록된 스토리지 소스의 폴더를 주기 스캔해 새 문서를 자동 반입하는 기능 |
 | 하이브리드 검색 | 벡터 유사도 검색과 렉시컬(키워드) 검색을 함께 수행하고 결과를 융합하는 방식 |
 | RRF | Reciprocal Rank Fusion. 서로 다른 검색 결과의 순위를 합쳐 하나의 순위로 만드는 융합 기법 |
+| Argus Catalog | DataHub 스타일 데이터 카탈로그와 Unity Catalog 호환 ML 모델 레지스트리를 하나로 묶은 Data Dynamics의 오픈소스 메타데이터 플랫폼 |
+| Query Listener | Trino의 EventListener SPI로 실행 질의의 입출력 테이블·컬럼을 받아 리니지를 만드는 Argus Catalog 확장 |
+| Metadata Sync | 여러 플랫폼의 스키마·키·DDL을 주기적으로 수집해 Argus Catalog에 동기화하는 서비스(:4610) |
+| URN | Uniform Resource Name. Argus Catalog가 데이터셋·API·모델 같은 자산을 식별하는 고유 이름 |
 | 청킹 (chunking) | 긴 문서를 검색 단위로 잘라내는 것. 조각마다 출처와 메타데이터를 붙입니다 |
 | 임베딩 (embedding) | 텍스트를 의미를 담은 숫자 벡터로 변환하는 것. 유사도 검색의 기준값이 됩니다 |
 | Vector DB | 임베딩 벡터와 메타데이터를 저장하고 유사도 검색을 제공하는 저장소 |
