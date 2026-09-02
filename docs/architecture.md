@@ -393,8 +393,8 @@ URL은 폐쇄망 DNS에서 해석되지 않는 경우가 많습니다.
 python scripts/generate_architecture_svg.py
 ```
 
-SVG와 PNG(4360 x 3340)가 함께 생성됩니다. 초보자용 개념도는
-`scripts/generate_concept_svg.py` 로 따로 만듭니다(`assets/lakehouse-concept.svg`). PNG 래스터화에는 시스템에 설치된 렌더러
+SVG와 PNG(4360 x 3340)가 함께 생성됩니다. 상자 안을 기능 타일로 줄인
+간략판은 `scripts/generate_concept_svg.py` 로 따로 만듭니다(`assets/lakehouse-concept.svg`). PNG 래스터화에는 시스템에 설치된 렌더러
 (rsvg-convert · Inkscape · Chromium · CairoSVG · ImageMagick 중 하나)를 사용하며,
 자세한 옵션은 [README](../README.md#png-렌더러)를 참고하십시오.
 

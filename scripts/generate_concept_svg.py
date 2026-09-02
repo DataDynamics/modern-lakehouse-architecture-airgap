@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""초보자용 Lakehouse 개념도를 SVG(+PNG)로 생성한다.
+"""Lakehouse 아키텍처 간략판(기능 개요도)을 SVG(+PNG)로 생성한다.
 
-엔지니어용 상세도(generate_architecture_svg.py)와 같은 팔레트·폰트·PNG 렌더러를
-공유하되, 제품명 대신 "데이터가 흘러가는 길"을 일상어로 설명하는 그림이다.
-
-  위 줄 : 데이터가 생겨서 쓰이기까지의 6단계
-  아래 줄 : AI 비서(Agent)가 질문에 답을 찾는 4단계
+상세도(generate_architecture_svg.py)와 같은 배치·색·경로 구조를 유지하되,
+상자 안의 긴 텍스트를 "기능명 + 한 줄 설명" 타일(sub-box)로 정리한 그림이다.
+경로 라벨도 짧게 줄여 처음 보는 사람이 구성요소의 역할을 먼저 파악하도록 한다.
 
 Usage:
     python scripts/generate_concept_svg.py
@@ -23,7 +21,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from generate_architecture_svg import (  # noqa: E402
-    BACKGROUND, FONT_STACK, HAIRLINE, INK, PALETTE, PNG_SCALE, render_png, text,
+    AGENT, BACKGROUND, CATALOG, DIRECT, FEDERATE, FONT_STACK, HAIRLINE, INK, MODEL,
+    PALETTE, PNG_SCALE, STREAM, Edge, render_edge, render_png, text,
 )
 
 # --------------------------------------------------------------------------
@@ -31,220 +30,257 @@ from generate_architecture_svg import (  # noqa: E402
 # --------------------------------------------------------------------------
 
 CANVAS_W = 2180
-CANVAS_H = 960
+CANVAS_H = 1360
 
-TITLE = "한눈에 보는 Lakehouse — 데이터가 흘러가는 길"
-SUBTITLE = ("금융권 폐쇄망 데이터 플랫폼 개념도 (초보자용)  ·  "
-            "괄호 안 영문은 실제 제품명  ·  기술 상세는 lakehouse-architecture-lr.svg")
+TITLE = "Lakehouse Reference Architecture — 기능 개요"
+SUBTITLE = ("구성요소별 핵심 기능만 타일로 표시  ·  "
+            "제품 사양 · 경로 설계 근거는 lakehouse-architecture-lr.svg 와 docs/architecture.md")
 
-ENCLOSURE = "사내망 (폐쇄망) — 아래 모든 구성요소는 외부 인터넷과 연결되지 않은 우리 회사 안에서 동작합니다"
+# 타일 치수
+TILE_H = 46
+TILE_GAP = 8
+PAD_X = 18
+HEAD_H = 68          # 제목 + 부제 + 구분선
+FOOT_H = 12
 
 # --------------------------------------------------------------------------
-# Cards
+# Boxes — 각 상자는 제목, 제품명, 기능 타일 목록
 # --------------------------------------------------------------------------
 
 
 @dataclass
-class Card:
+class Tile:
+    label: str
+    caption: str = ""
+
+
+@dataclass
+class Box:
+    key: str
+    x: int
+    y: int
+    w: int
     ramp: str
     title: str
-    tagline: list[str]            # 1~2줄 한 줄 설명
-    bullets: list[str]
-    product: str                  # 카드 하단의 실제 제품명
-    x: int = 0
-    y: int = 0
-    w: int = 290
-    h: int = 400
-    number: int | None = None
+    subtitle: str
+    tiles: list[Tile]
+
+    @property
+    def h(self) -> int:
+        return HEAD_H + len(self.tiles) * (TILE_H + TILE_GAP) + FOOT_H
 
     @property
     def right(self) -> int:
         return self.x + self.w
 
+    @property
+    def bottom(self) -> int:
+        return self.y + self.h
 
-# 위 줄 — 데이터가 흘러가는 길
-FLOW_Y, FLOW_H, FLOW_W, FLOW_GAP, FLOW_X0 = 190, 330, 290, 60, 70
+    @property
+    def mid_y(self) -> int:
+        return self.y + self.h // 2
 
-FLOW: list[Card] = [
-    Card("gray", "데이터가 생기는 곳",
-         ["은행 업무에서 매일 쌓이는", "기록들입니다"],
-         ["계좌 · 대출 거래 (계정계)",
-          "카드 승인 · 결제 내역",
-          "앱 · ATM · 콜센터 이용 기록",
-          "외부 기관 전문 · 시세",
-          "약관 · 규정 같은 문서"],
-         "Oracle · DB2 · 파일 · MQ"),
-    Card("teal", "모으기",
-         ["흩어진 데이터를 한 길로", "모아 옵니다"],
-         ["매일 밤 한꺼번에 (배치)",
-          "생기는 즉시 바로 (실시간)",
-          "형식 통일 · 빠진 것 확인",
-          "어디서 왔는지 이력 기록"],
-         "Cloudera CFM (NiFi) · Kafka"),
-    Card("blue", "쌓아두기",
-         ["한 창고에 단계별로", "정리해 보관합니다"],
-         ["원본 그대로 (Bronze)",
-          "깨끗이 정리한 것 (Silver)",
-          "바로 쓰는 요약본 (Gold)",
-          "문서 · 이미지 원본",
-          "과거 시점으로 되돌아보기 가능"],
-         "MinIO (S3 호환) + Iceberg"),
-    Card("purple", "다듬기",
-         ["정해진 일정에 따라", "정리하고 계산합니다"],
-         ["중복 제거 · 오류 정정",
-          "부서별 · 상품별 집계",
-          "'매일 새벽 3시' 같은 일정",
-          "앞 단계가 끝나야 다음 단계"],
-         "Cloudera CDE (Spark · Airflow)"),
-    Card("amber", "찾아 쓰기",
-         ["어디에 있든 한 창구에서", "물어봅니다"],
-         ["창고 + 원천을 하나의 창구로",
-          "SQL 한 번에 여러 저장소 조회",
-          "누가 무엇을 볼 수 있는지 통제",
-          "말로 물으면 SQL로 바꿔 줌"],
-         "Starburst Trino"),
-    Card("green", "활용하기",
-         ["사람과 AI가", "답을 얻는 곳입니다"],
-         ["대시보드 · 리포트",
-          "분석가의 노트북 · SQL",
-          "AI 비서에게 말로 질문",
-          "→ 아래 'AI 비서' 흐름 참고"],
-         "Spotfire · Cloudera AI · AI Agent"),
+
+BOXES: list[Box] = [
+    Box("source", 40, 260, 250, "gray", "1. Data Source", "금융권 원천 시스템", [
+        Tile("계정계 · 정보계", "원장 · 회계 (CDC)"),
+        Tile("카드 · 결제", "승인 · 매입 · VAN/PG 전문"),
+        Tile("채널", "인터넷뱅킹 · 앱 · ATM · 콜센터"),
+        Tile("대외계 · 시장", "금결원 · 신정원 · KRX 시세"),
+        Tile("리스크 · 컴플라이언스", "FDS · AML · 약관 / 규정 문서"),
+    ]),
+    Box("ingestion", 360, 260, 300, "teal", "2. Ingestion", "Cloudera CFM (Apache NiFi)", [
+        Tile("수집 · 연결", "DB · 파일 · MQ · API · 스트림"),
+        Tile("변환", "CSV / XML / JSON → Parquet · Avro"),
+        Tile("라우팅 · 흐름 제어", "조건 분기 · 우선순위 · Back-pressure"),
+        Tile("전달 보증 · 이력", "Guaranteed Delivery · Provenance"),
+        Tile("운영 · 보안", "GUI 흐름 설계 · 모니터링 · TLS"),
+    ]),
+    Box("streaming", 730, 120, 300, "coral", "3. Streaming Bus", "Cloudera CDP", [
+        Tile("Apache Kafka", "raw.* / cdc.* / evt.* 토픽 · 복제 3"),
+        Tile("Streams Messaging Manager", "토픽 · 컨슈머 · 지연 관제"),
+        Tile("ZooKeeper", "브로커 등록 · 리더 선출"),
+    ]),
+    Box("storage", 730, 410, 300, "blue", "4. Storage", "MinIO (S3 호환) + Apache Iceberg", [
+        Tile("Bronze", "원천 그대로 (append)"),
+        Tile("Silver", "정제 · 중복제거 · SCD"),
+        Tile("Gold", "집계 · 마트 · 피처"),
+        Tile("Docs", "문서 · 이미지 원본 (RAG 입력)"),
+        Tile("Iceberg Table · REST Catalog", "스냅샷 · time-travel · 스키마 변경"),
+    ]),
+    Box("processing", 1100, 120, 330, "purple", "5. Processing & Orchestration", "Cloudera CDE", [
+        Tile("Airflow", "DAG 스케줄 · 의존성 · SLA"),
+        Tile("Spark on Kubernetes", "Bronze → Silver → Gold · MERGE · Compaction"),
+    ]),
+    Box("federation", 1100, 410, 330, "amber", "6. Data Federation", "Starburst Trino", [
+        Tile("Coordinator · Worker", "HA · autoscale"),
+        Tile("Connectors", "Iceberg · Kafka · Hive · Oracle · PostgreSQL"),
+        Tile("AI Features", "NL-to-SQL · AI Functions · MCP Server"),
+        Tile("Model Provider", "OpenAI 호환 · 사내 모델 (on-prem)"),
+        Tile("Vector DB Support", "Iceberg · pgvector · Elasticsearch"),
+    ]),
+    Box("consumption", 1500, 410, 280, "green", "7. Consumption", "사람이 쓰는 접점", [
+        Tile("Spotfire", "대시보드 · Ad-hoc 분석"),
+        Tile("Cloudera AI", "Workbench · AI Studio · Agent Studio"),
+        Tile("SQL Client · Notebook · API", "DBeaver · Jupyter"),
+    ]),
+    Box("serving", 1850, 120, 290, "cyan", "모델 서빙", "Cloudera AI Inference (OpenAI 호환)", [
+        Tile("추론 엔드포인트", "사내 on-prem · 외부 호출 없음"),
+        Tile("생성 모델", "NL-to-SQL · 답변 생성"),
+        Tile("임베딩 · 리랭커", "한국어 모델 · 고객 보유"),
+    ]),
+    Box("agent", 1850, 410, 290, "rose", "고객 AI Agent", "업무 질의 · 문서 조회", [
+        Tile("Agent 런타임", "세션 · 도구 계획 · 권한 위임"),
+        Tile("도구 (MCP)", "Starburst · 문서 검색 · Catalog"),
+        Tile("감사", "질문 → 근거 → SQL → 답변 기록"),
+    ]),
+    Box("catalog", 360, 830, 300, "olive", "Data Catalog", "Argus Catalog", [
+        Tile("데이터 카탈로그", "데이터셋 · 스키마 · 리니지 · 용어집"),
+        Tile("메타데이터 수집", "11종 플랫폼 · Trino Query Listener"),
+        Tile("데이터 품질", "프로파일링 · 규칙 검증 · 점수 전파"),
+        Tile("거버넌스", "API 카탈로그 · AI Agent 카탈로그"),
+        Tile("모델 레지스트리", "MLflow · OCI · 에어갭 반입"),
+    ]),
+    Box("rag", 730, 830, 300, "plum", "RAG", "Argus RAG Studio", [
+        Tile("문서 반입", "S3 소스 · 소스 워치 · 라우팅"),
+        Tile("인제스천", "파싱 · 청킹 · 임베딩 · 색인"),
+        Tile("검색 · 생성", "하이브리드 · 리랭크 · 인용 답변"),
+        Tile("REST API", "search · query · chat · API 키"),
+        Tile("평가 · 운영", "골든셋 · 트레이스 · 피드백"),
+    ]),
+    Box("vectordb", 1100, 830, 330, "steel", "Vector DB", "PostgreSQL + pgvector (기본)", [
+        Tile("저장 대상", "청크 · 벡터 · tsvector · 메타데이터"),
+        Tile("교체 가능 백엔드", "Qdrant · Weaviate · Milvus"),
+        Tile("검색", "벡터 + 렉시컬 → RRF → 리랭크"),
+        Tile("호출 주체", "RAG Studio · AI Agent · Trino"),
+    ]),
 ]
 
-# 아래 줄 — AI 비서가 답을 찾는 길
-AI_TITLE = "AI 비서(Agent)는 어떻게 답을 찾나요?"
-AI_Y, AI_H, AI_W, AI_GAP, AI_X0 = 610, 250, 440, 60, 80
+B = {b.key: b for b in BOXES}
 
-AI_FLOW: list[Card] = [
-    Card("olive", "참고 자료 준비",
-         ["AI가 볼 자료를 미리 정리해 둡니다"],
-         ["데이터 사전 — 어떤 데이터가 어디에, 무슨 뜻인지",
-          "문서 검색 준비 — 약관·규정을 잘게 나눠 의미로 찾게",
-          "나눈 문서 조각을 검색용 저장소에 보관"],
-         "Argus Catalog · Argus RAG Studio · Vector DB"),
-    Card("rose", "AI 비서가 근거 찾기",
-         ["질문을 이해하고 필요한 자료를 모읍니다"],
-         ["관련 문서 조각 찾기 (RAG)",
-          "데이터 창구(⑤)에 SQL로 수치 조회",
-          "질문한 사람의 권한 범위 안에서만"],
-         "고객 AI Agent (MCP 도구)"),
-    Card("cyan", "사내 AI 모델이 답 쓰기",
-         ["모은 근거로 답변을 만듭니다"],
-         ["회사 안에서 돌아가는 모델 — 외부로 보내지 않음",
-          "답변 작성 · 요약 · SQL 생성 · 문서 이해",
-          "한국어 모델을 회사가 직접 보유"],
-         "Cloudera AI Inference (OpenAI 호환)"),
-    Card("steel", "답변과 기록",
-         ["사람에게 답을 주고 과정을 남깁니다"],
-         ["답 + 근거 문서 + 사용한 SQL을 함께 제시",
-          "질문 → 근거 → 답변 전 과정을 감사 기록",
-          "잘못된 답은 피드백으로 개선"],
-         "감사 로그 · 피드백"),
+# --------------------------------------------------------------------------
+# Edges — 상세도와 같은 구조, 라벨만 짧게
+# --------------------------------------------------------------------------
+
+
+def edges() -> list[Edge]:
+    s, i, st, sto = B["source"], B["ingestion"], B["streaming"], B["storage"]
+    p, f, c = B["processing"], B["federation"], B["consumption"]
+    sv, a, cat, r, v = B["serving"], B["agent"], B["catalog"], B["rag"], B["vectordb"]
+    return [
+        # 수집 · 스트리밍
+        Edge(f"M165 {s.y} V90 H700 V200 H{st.x - 8}", STREAM, "6 4",
+             label="실시간 이벤트 직결 (CDC · MQ · FDS)", label_xy=(330, 108)),
+        Edge(f"M{s.right} {s.mid_y} H{i.x - 8}"),
+        Edge(f"M{i.right} 300 H690 V240 H{st.x - 8}"),
+        Edge(f"M{st.x - 8} 320 H706 V400 H{i.right + 8}", STREAM, "6 4"),
+        Edge(f"M{i.right} 520 H{sto.x - 8}"),
+        Edge(f"M{st.right} 220 H{p.x - 8}", STREAM, "6 4",
+             label="Kafka → Spark Streaming", label_xy=(1100, 108)),
+        # 저장 · 처리 · 조회
+        Edge(f"M{sto.right + 4} 430 H1065 V260 H{p.x - 8}", both=True),
+        Edge(f"M{sto.right} 600 H{f.x - 8}"),
+        Edge(f"M{sto.right} 425 H1050 V385 H1460 V500 H{c.x - 8}", DIRECT,
+             label="S3 직접 접근 (학습 데이터 · 문서 원본)", label_xy=(1150, 378)),
+        Edge(f"M{f.right} 560 H{c.x - 8}", label="JDBC / ODBC", label_xy=(1436, 548)),
+        Edge(f"M165 {s.bottom} V784 H1075 V690 H{f.x - 8}", FEDERATE, "10 3 2 3",
+             label="원천 직접 페더레이션", label_xy=(520, 776)),
+        # 모델 · Agent
+        Edge(f"M{f.right} 690 H1815 V{sv.bottom + 2}", MODEL,
+             label="모델 호출", label_xy=(1500, 682)),
+        Edge(f"M1900 {a.bottom + 2} V740 H{f.right + 12}", AGENT, both=True,
+             label="MCP · 메타데이터 · SQL", label_xy=(1610, 732)),
+        Edge(f"M1995 {a.y - 4} V{sv.bottom + 2}", MODEL,
+             label="추론 호출", label_xy=(2010, 392)),
+        # RAG
+        Edge(f"M880 {sto.bottom} V{r.y - 8}", DIRECT,
+             label="소스 워치 (S3 API)", label_xy=(893, 770)),
+        Edge(f"M{r.right} 1000 H{v.x - 8}", both=True,
+             label="upsert · 검색", label_xy=(1034, 988)),
+        Edge(f"M{v.right} 900 H1990 V{a.bottom + 8}", AGENT,
+             label="Vector DB 직접 조회 (Top-K)", label_xy=(1450, 890)),
+        Edge(f"M1265 {v.y - 8} V{f.bottom + 8}", both=True,
+             label="벡터 테이블 조회", label_xy=(1278, 806)),
+        Edge(f"M2060 {a.bottom + 2} V1210 H880 V{r.bottom + 8}", AGENT, both=True,
+             label="Argus REST API (search · query · chat)", label_xy=(1300, 1202)),
+        # Catalog
+        Edge(f"M600 {i.bottom} V{cat.y - 8}", CATALOG, "3 3",
+             label="NiFi 리니지", label_xy=(612, 700)),
+        Edge(f"M1140 {f.bottom} V808 H700 V900 H{cat.right + 8}", CATALOG, "3 3",
+             label="Query Listener · Metadata Sync", label_xy=(905, 803)),
+        Edge(f"M2100 {a.bottom + 2} V1232 H510 V{cat.bottom + 8}", CATALOG, "3 3",
+             both=True, label="Agent 등록 · 미터링 · 메타데이터 API",
+             label_xy=(700, 1250)),
+    ]
+
+
+LEGEND = [
+    "배치 : Source → CFM → MinIO   |   실시간 : Source / CFM → Kafka → Spark Streaming → MinIO   |   "
+    "조회 : Trino → Spotfire · Cloudera AI   |   Agent : AI Agent → MCP → Trino · 사내 모델",
+    "RAG : MinIO docs/ → Argus RAG Studio → Vector DB → AI Agent (직접 조회 또는 REST API)   |   "
+    "카탈로그 : NiFi · Trino → Argus Catalog ↔ AI Agent",
+    "실선 = 상시 흐름 · 주황 점선 = 스트리밍 · 파랑 = S3 직접 접근 · 보라 일점쇄선 = 원천 페더레이션 · "
+    "청록 = 모델 호출 · 자주 = Agent 호출 · 올리브 점선 = 메타데이터 · 리니지",
 ]
-
-FS_CARD_TITLE = 21
-FS_TAGLINE = 13.5
-FS_BULLET = 13.5
-FS_PRODUCT = 11.5
 
 # --------------------------------------------------------------------------
 # Rendering
 # --------------------------------------------------------------------------
 
 
-def block_arrow(x: int, y: int, w: int = 48) -> str:
-    """카드 사이의 굵은 오른쪽 화살표. x=왼쪽 끝, y=세로 중심."""
-    hx = x + w - 22
-    return (f'<path d="M{x} {y - 11} H{hx} V{y - 22} L{x + w} {y} '
-            f'L{hx} {y + 22} V{y + 11} H{x} Z" fill="{HAIRLINE}"/>')
-
-
-def render_card(c: Card) -> list[str]:
-    ramp = PALETTE[c.ramp]
+def render_box(b: Box) -> list[str]:
+    ramp = PALETTE[b.ramp]
     out = [
-        f'<rect x="{c.x}" y="{c.y}" width="{c.w}" height="{c.h}" rx="16" '
-        f'fill="{ramp.fill}" stroke="{ramp.stroke}" stroke-width="1.2"/>'
+        f'<rect x="{b.x}" y="{b.y}" width="{b.w}" height="{b.h}" rx="12" '
+        f'fill="{ramp.fill}" stroke="{ramp.stroke}" stroke-width="0.9"/>'
     ]
-    pad = 22
-    tx = c.x + pad
-    cur = c.y + 46
-    if c.number is not None:
-        cx, cy = c.x + pad + 16, c.y + 38
-        out.append(f'<circle cx="{cx}" cy="{cy}" r="17" fill="{ramp.stroke}"/>')
-        out.append(f'<text x="{cx}" y="{cy + 6}" font-size="16" font-weight="600" '
-                   f'fill="#FFFFFF" text-anchor="middle">{c.number}</text>')
-        tx_title = tx + 44
-    else:
-        tx_title = tx
-    out.append(text(tx_title, cur, c.title, FS_CARD_TITLE, ramp.title, "600"))
-    cur += 14
-    for line in c.tagline:
-        cur += 20
-        out.append(text(tx, cur, line, FS_TAGLINE, ramp.muted))
-    cur += 16
-    out.append(f'<line x1="{tx}" y1="{cur}" x2="{c.right - pad}" y2="{cur}" '
-               f'stroke="{ramp.rule}" stroke-width="1"/>')
-    for b in c.bullets:
-        cur += 27
-        out.append(f'<circle cx="{tx + 4}" cy="{cur - 5}" r="3" fill="{ramp.stroke}"/>')
-        out.append(text(tx + 16, cur, b, FS_BULLET, ramp.body))
-    # 하단 제품명 pill
-    py = c.y + c.h - 44
-    out.append(f'<rect x="{tx}" y="{py}" width="{c.w - 2 * pad}" height="28" rx="14" '
-               f'fill="#FFFFFF" stroke="{ramp.rule}" stroke-width="1"/>')
-    out.append(text(tx + 14, py + 18, f"실제 제품 · {c.product}", FS_PRODUCT, ramp.muted))
+    tx, inner_r = b.x + PAD_X, b.right - PAD_X
+    out.append(f'<text x="{tx}" y="{b.y + 32}" font-size="15" font-weight="500" '
+               f'fill="{ramp.title}">{b.title}</text>')
+    out.append(text(tx, b.y + 53, b.subtitle, 12.5, ramp.muted))
+    out.append(f'<line x1="{tx}" y1="{b.y + HEAD_H}" x2="{inner_r}" y2="{b.y + HEAD_H}" '
+               f'stroke="{ramp.rule}" stroke-width="0.9"/>')
+    cur = b.y + HEAD_H + TILE_GAP
+    for t in b.tiles:
+        out.append(f'<rect x="{tx}" y="{cur}" width="{b.w - 2 * PAD_X}" height="{TILE_H}" '
+                   f'rx="7" fill="#FFFFFF" stroke="{ramp.rule}" stroke-width="0.9"/>')
+        out.append(f'<rect x="{tx}" y="{cur + 8}" width="3" height="{TILE_H - 16}" '
+                   f'rx="1.5" fill="{ramp.stroke}"/>')
+        out.append(text(tx + 14, cur + 19, t.label, 12.5, ramp.title, "500"))
+        if t.caption:
+            out.append(text(tx + 14, cur + 36, t.caption, 10.5, ramp.muted))
+        cur += TILE_H + TILE_GAP
     return out
 
 
-def layout() -> None:
-    for i, c in enumerate(FLOW):
-        c.x, c.y, c.w, c.h = FLOW_X0 + i * (FLOW_W + FLOW_GAP), FLOW_Y, FLOW_W, FLOW_H
-        c.number = i + 1
-    for i, c in enumerate(AI_FLOW):
-        c.x, c.y, c.w, c.h = AI_X0 + i * (AI_W + AI_GAP), AI_Y, AI_W, AI_H
-        c.number = i + 1
-
-
 def build() -> str:
-    layout()
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{CANVAS_W}" '
         f'height="{CANVAS_H}" viewBox="0 0 {CANVAS_W} {CANVAS_H}" '
         f'role="img" font-family="{FONT_STACK}">',
         f'<title>{TITLE}</title>',
-        '<desc>Beginner-friendly concept view of the air-gapped lakehouse: '
-        'six plain-language steps from where data is born to where people '
-        'and AI use it, and four steps showing how the AI assistant '
-        'prepares references, gathers evidence, writes an answer with an '
-        'in-house model, and records the whole process.</desc>',
+        '<desc>Simplified view of the air-gapped lakehouse reference '
+        'architecture. Same layout and paths as the detailed diagram, but '
+        'each component box lists only its main functions as small tiles '
+        'with one-line captions.</desc>',
+        '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" '
+        'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+        '<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" '
+        'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+        '</marker></defs>',
         f'<rect x="0" y="0" width="{CANVAS_W}" height="{CANVAS_H}" fill="{BACKGROUND}"/>',
-        f'<text x="40" y="52" font-size="26" font-weight="600" fill="#2C2C2A">{TITLE}</text>',
-        text(40, 80, SUBTITLE, 13, INK),
-        # 폐쇄망 울타리
-        f'<rect x="40" y="112" width="{CANVAS_W - 80}" height="{CANVAS_H - 160}" rx="22" '
-        f'fill="none" stroke="#9B2D4F" stroke-width="1.4" stroke-dasharray="10 6"/>',
-        f'<rect x="60" y="100" width="{CANVAS_W - 120}" height="26" fill="{BACKGROUND}"/>',
-        text(72, 118, "🔒 " + ENCLOSURE, 14, "#9B2D4F", "500"),
-        text(70, 166, "데이터가 흘러가는 길", 19, "#2C2C2A", "600"),
+        f'<text x="40" y="48" font-size="22" font-weight="500" fill="#2C2C2A">{TITLE}</text>',
+        text(40, 72, SUBTITLE, 13, INK),
     ]
-    for i, c in enumerate(FLOW):
-        parts += render_card(c)
-        if i < len(FLOW) - 1:
-            parts.append(block_arrow(c.right + 6, c.y + c.h // 2))
-
-    parts.append(f'<line x1="70" y1="{AI_Y - 66}" x2="{CANVAS_W - 70}" y2="{AI_Y - 66}" '
-                 f'stroke="{HAIRLINE}" stroke-width="1"/>')
-    parts.append(text(70, AI_Y - 26, AI_TITLE, 19, "#2C2C2A", "600"))
-    for i, c in enumerate(AI_FLOW):
-        parts += render_card(c)
-        if i < len(AI_FLOW) - 1:
-            parts.append(block_arrow(c.right + 6, c.y + c.h // 2))
-
-    parts.append(text(40, CANVAS_H - 22,
-                      "위 줄의 ③ 창고에 보관한 문서와 ⑤ 창구의 데이터를 아래 줄의 AI 비서가 "
-                      "함께 사용합니다.   ·   화살표 = 데이터·정보가 넘어가는 방향",
-                      12, "#888780"))
+    for e in edges():
+        parts += render_edge(e)
+    for b in BOXES:
+        parts += render_box(b)
+    parts.append(f'<line x1="40" y1="1270" x2="{CANVAS_W - 40}" y2="1270" '
+                 f'stroke="{HAIRLINE}" stroke-width="0.9"/>')
+    for k, line in enumerate(LEGEND):
+        parts.append(text(40, 1290 + k * 18, line, 11, "#888780"))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
