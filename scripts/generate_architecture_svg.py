@@ -353,50 +353,49 @@ BOXES: list[Box] = [
     Box(
         key="rag", x=730, y=1050, w=300, h=420, ramp="plum",
         title="Argus RAG Studio",
-        subtitle="RAG 파이프라인 · 검색 API",
+        subtitle="RAG 백엔드 (FastAPI :4700) · Next.js UI",
         blocks=[
-            Group("문서 적재 · 파싱", [
-                "docs/raw/ → docs/parsed/",
-                "PDF · HWP · 이미지 OCR · 표 인식",
+            Group("문서 반입 (Build)", [
+                "스토리지 소스 : S3 호환 (읽기 전용)",
+                "소스 워치 주기 스캔 · 문서 라우팅",
             ]),
-            Group("청킹 · 임베딩", [
-                "docs/parsed/ → docs/chunks/",
-                "임베딩 모델 호출 (OpenAI 호환)",
-                "docs/chunks/ → docs/vectors/",
+            Group("인제스천 파이프라인", [
+                "파싱 text · layout · docai · vlm · rhwp",
+                "청킹 8종 → 임베딩 → 색인",
             ]),
-            Group("색인 적재 · 운영", [
-                "Vector DB upsert · 증분 갱신",
-                "스케줄 · 재처리 · 검색 품질 평가",
+            Group("검색 · 생성 · 평가", [
+                "하이브리드 (벡터 + 렉시컬 + RRF) → 리랭크",
+                "인용 답변 · 챗 (SSE) · 골든셋 평가",
             ]),
-            Group("RAG API", [
-                "retrieve : 검색 · 리랭킹 · 권한 필터",
-                "query : 근거 인용 답변 생성",
-                "REST · OpenAI 호환 엔드포인트",
+            Group("REST API", [
+                "search · query · chat · federated",
+                "JWT · Keycloak OIDC · API 키",
             ]),
+            Note("임베딩 · 리랭커 · LLM 은 OpenAI 호환 → 모델 서빙 연동"),
         ],
     ),
     Box(
         key="vectordb", x=1100, y=1050, w=330, h=420, ramp="steel",
         title="Vector DB",
-        subtitle="임베딩 인덱스 저장소",
+        subtitle="PostgreSQL + pgvector (기본)",
         blocks=[
             Group("저장 대상", [
-                "청크 벡터 + 메타데이터",
-                "출처 s3 경로 · 권한 태그",
+                "청크 · 벡터 (1024d) · tsvector",
+                "메타데이터 · 출처 경로 · 트레이스",
             ]),
-            Group("후보 저장소", [
-                "├ Iceberg (docs/vectors/)",
-                "├ PostgreSQL / PGVector",
-                "└ Elasticsearch (Nori + kNN)",
+            Group("교체 가능 백엔드 (VectorStore)", [
+                "├ pgvector (기본)",
+                "├ Qdrant · Weaviate · Milvus",
+                "└ Databricks Vector Search",
             ]),
             Group("검색", [
-                "유사도 검색 (Top-K) · 필터",
-                "하이브리드 (BM25 + 벡터) · RRF",
+                "벡터 (cosine · l2 · ip) + 렉시컬 (tsvector)",
+                "RRF 융합 → 리랭커 (cross-encoder · LLM)",
             ]),
             Group("호출 주체", [
                 "├ Argus RAG Studio (색인 · 검색)",
                 "├ AI Agent (직접 조회)",
-                "└ Starburst Trino (벡터 테이블)",
+                "└ Starburst Trino (PostgreSQL 커넥터)",
             ]),
         ],
     ),
@@ -460,7 +459,7 @@ EDGES: list[Edge] = [
          label="\ucd94\ub860 \ud638\ucd9c", label_xy=(2010, 431)),
     # RAG: MinIO docs/ -> RAG pipeline -> Vector DB -> AI Agent / Trino
     Edge("M880 870 V1042", DIRECT,
-         label="S3 API \uc9c1\uc811 \uc811\uadfc : s3a://lake/docs/",
+         label="\uc18c\uc2a4 \uc6cc\uce58 \uc2a4\uce94 (S3 API) : s3a://lake/docs/",
          label_xy=(893, 925)),
     Edge("M1030 1230 H1092", both=True,
          label="upsert \u00b7 \uac80\uc0c9", label_xy=(1034, 1218)),
@@ -468,7 +467,7 @@ EDGES: list[Edge] = [
          label="Vector DB \uc9c1\uc811 \uc870\ud68c (Top-K) \u00b7 \uadfc\uac70 \ubb38\uc11c",
          label_xy=(1450, 1140)),
     Edge("M2060 772 V1500 H880 V1474", AGENT, both=True,
-         label="Argus RAG API \ud638\ucd9c (retrieve \u00b7 query)",
+         label="Argus REST API (search \u00b7 query \u00b7 chat) \u00b7 API \ud0a4",
          label_xy=(1300, 1492)),
     Edge("M1265 1042 V978", both=True,
          label="\ubca1\ud130 \ud14c\uc774\ube14 \uc870\ud68c",
@@ -484,7 +483,7 @@ LEGEND = [
     "\uc0ac\ub0b4 \ubaa8\ub378",
     "RAG \uacbd\ub85c : MinIO s3a://lake/docs/ \u2192 Argus RAG Studio "
     "\u2192 Vector DB \u2192 AI Agent (\uc9c1\uc811 \uc870\ud68c \ub610\ub294 "
-    "Argus RAG API) \u00b7 Starburst Trino",
+    "Argus REST API) \u00b7 Starburst Trino",
     "\uc2e4\uc120 = \uc0c1\uc2dc \ub370\uc774\ud130 \ud750\ub984   \u00b7   "
     "\uc8fc\ud669 \uc810\uc120 = \uc2a4\ud2b8\ub9ac\ubc0d \uacbd\ub85c   \u00b7   "
     "\ud30c\ub791 \uc2e4\uc120 = S3 \uc9c1\uc811 \uc811\uadfc   \u00b7   "
@@ -597,9 +596,10 @@ def build() -> str:
         'models. Along the bottom, Argus RAG Studio reads document '
         'originals from the MinIO docs zone over the S3 API, parses, '
         'chunks and embeds them, and writes the embeddings into a '
-        'vector database. The AI agent reaches the vectors either by '
-        'querying the vector database directly or through the Argus '
-        'RAG API; Starburst Trino exposes the same vectors as '
+        'vector database (PostgreSQL + pgvector by default). The AI '
+        'agent reaches the vectors either by querying the vector '
+        'database directly or through the Argus REST API (search, '
+        'query, chat); Starburst Trino exposes the same vectors as '
         'tables.</desc>',
         '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" '
         'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'

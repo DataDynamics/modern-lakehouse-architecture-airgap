@@ -48,8 +48,8 @@
 | 5 | Processing & Orchestration | Cloudera CDE — Airflow, Spark on Kubernetes |
 | 6 | Data Federation | Starburst Trino |
 | 7 | Consumption | Spotfire, Cloudera AI, SQL Client, Notebook |
-| + | RAG | Argus RAG Studio — 문서 파싱·청킹·임베딩 파이프라인 + 검색 API |
-| + | Vector DB | Iceberg / PostgreSQL·PGVector / Elasticsearch |
+| + | RAG | [Argus RAG Studio](https://github.com/DataDynamics-OSS/argus-rag-studio) — 인제스천 파이프라인 · 하이브리드 검색 · 생성 · 평가 · REST API |
+| + | Vector DB | PostgreSQL + pgvector (기본), Qdrant · Weaviate · Milvus 교체 가능 |
 | + | 모델 서빙 | Cloudera AI Inference Service (OpenAI 호환) + 고객 보유 모델 |
 | + | AI Agent | 고객 AI Agent — Starburst MCP 도구, 권한 위임, 감사 |
 
@@ -155,8 +155,8 @@ SVG는 `Pretendard → Malgun Gothic → Apple SD Gothic Neo → Noto Sans KR` �
 | Starburst Trino | 분산 SQL 질의 엔진 Trino의 상용 배포판. 여러 저장소를 하나의 SQL 네임스페이스로 묶습니다 |
 | Spotfire | 시각화 기반 분석 플랫폼. 대시보드와 Ad-hoc 분석에 사용 |
 | Cloudera AI | 모델 학습·서빙과 AI 에이전트를 제공하는 Cloudera 제품 |
-| Argus RAG Studio | 문서 파싱·청킹·임베딩·색인 파이프라인과 검색·답변 API를 제공하는 RAG 플랫폼 |
-| PGVector | PostgreSQL에 벡터 타입과 유사도 인덱스(HNSW 등)를 추가하는 확장 |
+| Argus RAG Studio | RAG 파이프라인의 구축·검색/생성·평가·운영·배포를 한 곳에서 다루는 Data Dynamics의 오픈소스 플랫폼 (Apache-2.0). FastAPI 백엔드와 Next.js UI, 에이전트 기반 원격 배포로 구성 |
+| pgvector | PostgreSQL에 벡터 타입과 유사도 인덱스(HNSW 등)를 추가하는 확장. Argus RAG Studio의 기본 벡터 저장소 |
 | Elasticsearch | 문서 검색 엔진. 한국어 형태소 분석(Nori)과 kNN 벡터 검색을 함께 제공합니다 |
 
 ### 기타
