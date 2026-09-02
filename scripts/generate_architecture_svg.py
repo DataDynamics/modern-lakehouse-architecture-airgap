@@ -755,12 +755,15 @@ def _run(cmd: list[str]) -> None:
                    stderr=subprocess.DEVNULL)
 
 
-def render_png(svg: Path, png: Path, width: int) -> str:
+def render_png(svg: Path, png: Path, width: int,
+               canvas: tuple[int, int] = (CANVAS_W, CANVAS_H)) -> str:
     """SVG 를 PNG 로 래스터화하고 사용한 렌더러 이름을 반환한다.
 
-    설치된 렌더러가 하나도 없으면 RuntimeError 를 발생시킨다.
+    canvas 는 SVG 의 (폭, 높이). 설치된 렌더러가 하나도 없으면 RuntimeError 를
+    발생시킨다.
     """
-    height = round(width * CANVAS_H / CANVAS_W)
+    cw, ch = canvas
+    height = round(width * ch / cw)
     svg, png = svg.resolve(), png.resolve()
 
     if (exe := _which("rsvg-convert")):
@@ -783,18 +786,18 @@ def render_png(svg: Path, png: Path, width: int) -> str:
                 '<!doctype html><meta charset="utf-8">'
                 "<style>html,body{margin:0;padding:0;overflow:hidden;"
                 f"background:{BACKGROUND}}}"
-                f"svg{{display:block;width:{CANVAS_W}px;height:{CANVAS_H}px}}"
+                f"svg{{display:block;width:{cw}px;height:{ch}px}}"
                 "</style>" + svg.read_text(encoding="utf-8"),
                 encoding="utf-8")
-            scale = width / CANVAS_W
+            scale = width / cw
             _run([exe, "--headless", "--disable-gpu", "--no-sandbox",
                   "--hide-scrollbars",
                   f"--default-background-color={BACKGROUND[1:]}FF",
-                  f"--window-size={CANVAS_W},{CANVAS_H + CHROME_VIEWPORT_PAD}",
+                  f"--window-size={cw},{ch + CHROME_VIEWPORT_PAD}",
                   f"--force-device-scale-factor={scale:.4f}",
                   "--virtual-time-budget=3000",
                   f"--screenshot={png}", page.as_uri()])
-        _crop_png_rows(png, round(CANVAS_H * scale))
+        _crop_png_rows(png, round(ch * scale))
         return "chromium"
 
     try:

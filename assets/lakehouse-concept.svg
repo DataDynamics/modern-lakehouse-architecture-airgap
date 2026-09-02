@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2180" height="960" viewBox="0 0 2180 960" role="img" font-family="'Pretendard','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR','Segoe UI',sans-serif">
+<title>한눈에 보는 Lakehouse — 데이터가 흘러가는 길</title>
+<desc>Beginner-friendly concept view of the air-gapped lakehouse: six plain-language steps from where data is born to where people and AI use it, and four steps showing how the AI assistant prepares references, gathers evidence, writes an answer with an in-house model, and records the whole process.</desc>
+<rect x="0" y="0" width="2180" height="960" fill="#FFFFFF"/>
+<text x="40" y="52" font-size="26" font-weight="600" fill="#2C2C2A">한눈에 보는 Lakehouse — 데이터가 흘러가는 길</text>
+<text x="40" y="80" font-size="13" fill="#5F5E5A">금융권 폐쇄망 데이터 플랫폼 개념도 (초보자용)  ·  괄호 안 영문은 실제 제품명  ·  기술 상세는 lakehouse-architecture-lr.svg</text>
+<rect x="40" y="112" width="2100" height="800" rx="22" fill="none" stroke="#9B2D4F" stroke-width="1.4" stroke-dasharray="10 6"/>
+<rect x="60" y="100" width="2060" height="26" fill="#FFFFFF"/>
+<text x="72" y="118" font-size="14" font-weight="500" fill="#9B2D4F">🔒 사내망 (폐쇄망) — 아래 모든 구성요소는 외부 인터넷과 연결되지 않은 우리 회사 안에서 동작합니다</text>
+<text x="70" y="166" font-size="19" font-weight="600" fill="#2C2C2A">데이터가 흘러가는 길</text>
+<rect x="70" y="190" width="290" height="330" rx="16" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1.2"/>
+<circle cx="108" cy="228" r="17" fill="#5F5E5A"/>
+<text x="108" y="234" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="136" y="236" font-size="21" font-weight="600" fill="#2C2C2A">데이터가 생기는 곳</text>
+<text x="92" y="270" font-size="13.5" fill="#888780">은행 업무에서 매일 쌓이는</text>
+<text x="92" y="290" font-size="13.5" fill="#888780">기록들입니다</text>
+<line x1="92" y1="306" x2="338" y2="306" stroke="#B4B2A9" stroke-width="1"/>
+<circle cx="96" cy="328" r="3" fill="#5F5E5A"/>
+<text x="108" y="333" font-size="13.5" fill="#444441">계좌 · 대출 거래 (계정계)</text>
+<circle cx="96" cy="355" r="3" fill="#5F5E5A"/>
+<text x="108" y="360" font-size="13.5" fill="#444441">카드 승인 · 결제 내역</text>
+<circle cx="96" cy="382" r="3" fill="#5F5E5A"/>
+<text x="108" y="387" font-size="13.5" fill="#444441">앱 · ATM · 콜센터 이용 기록</text>
+<circle cx="96" cy="409" r="3" fill="#5F5E5A"/>
+<text x="108" y="414" font-size="13.5" fill="#444441">외부 기관 전문 · 시세</text>
+<circle cx="96" cy="436" r="3" fill="#5F5E5A"/>
+<text x="108" y="441" font-size="13.5" fill="#444441">약관 · 규정 같은 문서</text>
+<rect x="92" y="476" width="246" height="28" rx="14" fill="#FFFFFF" stroke="#B4B2A9" stroke-width="1"/>
+<text x="106" y="494" font-size="11.5" fill="#888780">실제 제품 · Oracle · DB2 · 파일 · MQ</text>
+<path d="M366 344 H392 V333 L414 355 L392 377 V366 H366 Z" fill="#D3D1C7"/>
+<rect x="420" y="190" width="290" height="330" rx="16" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.2"/>
+<circle cx="458" cy="228" r="17" fill="#0F6E56"/>
+<text x="458" y="234" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="486" y="236" font-size="21" font-weight="600" fill="#04342C">모으기</text>
+<text x="442" y="270" font-size="13.5" fill="#0F6E56">흩어진 데이터를 한 길로</text>
+<text x="442" y="290" font-size="13.5" fill="#0F6E56">모아 옵니다</text>
+<line x1="442" y1="306" x2="688" y2="306" stroke="#5DCAA5" stroke-width="1"/>
+<circle cx="446" cy="328" r="3" fill="#0F6E56"/>
+<text x="458" y="333" font-size="13.5" fill="#085041">매일 밤 한꺼번에 (배치)</text>
+<circle cx="446" cy="355" r="3" fill="#0F6E56"/>
+<text x="458" y="360" font-size="13.5" fill="#085041">생기는 즉시 바로 (실시간)</text>
+<circle cx="446" cy="382" r="3" fill="#0F6E56"/>
+<text x="458" y="387" font-size="13.5" fill="#085041">형식 통일 · 빠진 것 확인</text>
+<circle cx="446" cy="409" r="3" fill="#0F6E56"/>
+<text x="458" y="414" font-size="13.5" fill="#085041">어디서 왔는지 이력 기록</text>
+<rect x="442" y="476" width="246" height="28" rx="14" fill="#FFFFFF" stroke="#5DCAA5" stroke-width="1"/>
+<text x="456" y="494" font-size="11.5" fill="#0F6E56">실제 제품 · Cloudera CFM (NiFi) · Kafka</text>
+<path d="M716 344 H742 V333 L764 355 L742 377 V366 H716 Z" fill="#D3D1C7"/>
+<rect x="770" y="190" width="290" height="330" rx="16" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.2"/>
+<circle cx="808" cy="228" r="17" fill="#185FA5"/>
+<text x="808" y="234" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="836" y="236" font-size="21" font-weight="600" fill="#042C53">쌓아두기</text>
+<text x="792" y="270" font-size="13.5" fill="#185FA5">한 창고에 단계별로</text>
+<text x="792" y="290" font-size="13.5" fill="#185FA5">정리해 보관합니다</text>
+<line x1="792" y1="306" x2="1038" y2="306" stroke="#85B7EB" stroke-width="1"/>
+<circle cx="796" cy="328" r="3" fill="#185FA5"/>
+<text x="808" y="333" font-size="13.5" fill="#0C447C">원본 그대로 (Bronze)</text>
+<circle cx="796" cy="355" r="3" fill="#185FA5"/>
+<text x="808" y="360" font-size="13.5" fill="#0C447C">깨끗이 정리한 것 (Silver)</text>
+<circle cx="796" cy="382" r="3" fill="#185FA5"/>
+<text x="808" y="387" font-size="13.5" fill="#0C447C">바로 쓰는 요약본 (Gold)</text>
+<circle cx="796" cy="409" r="3" fill="#185FA5"/>
+<text x="808" y="414" font-size="13.5" fill="#0C447C">문서 · 이미지 원본</text>
+<circle cx="796" cy="436" r="3" fill="#185FA5"/>
+<text x="808" y="441" font-size="13.5" fill="#0C447C">과거 시점으로 되돌아보기 가능</text>
+<rect x="792" y="476" width="246" height="28" rx="14" fill="#FFFFFF" stroke="#85B7EB" stroke-width="1"/>
+<text x="806" y="494" font-size="11.5" fill="#185FA5">실제 제품 · MinIO (S3 호환) + Iceberg</text>
+<path d="M1066 344 H1092 V333 L1114 355 L1092 377 V366 H1066 Z" fill="#D3D1C7"/>
+<rect x="1120" y="190" width="290" height="330" rx="16" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.2"/>
+<circle cx="1158" cy="228" r="17" fill="#534AB7"/>
+<text x="1158" y="234" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="1186" y="236" font-size="21" font-weight="600" fill="#26215C">다듬기</text>
+<text x="1142" y="270" font-size="13.5" fill="#534AB7">정해진 일정에 따라</text>
+<text x="1142" y="290" font-size="13.5" fill="#534AB7">정리하고 계산합니다</text>
+<line x1="1142" y1="306" x2="1388" y2="306" stroke="#AFA9EC" stroke-width="1"/>
+<circle cx="1146" cy="328" r="3" fill="#534AB7"/>
+<text x="1158" y="333" font-size="13.5" fill="#3C3489">중복 제거 · 오류 정정</text>
+<circle cx="1146" cy="355" r="3" fill="#534AB7"/>
+<text x="1158" y="360" font-size="13.5" fill="#3C3489">부서별 · 상품별 집계</text>
+<circle cx="1146" cy="382" r="3" fill="#534AB7"/>
+<text x="1158" y="387" font-size="13.5" fill="#3C3489">'매일 새벽 3시' 같은 일정</text>
+<circle cx="1146" cy="409" r="3" fill="#534AB7"/>
+<text x="1158" y="414" font-size="13.5" fill="#3C3489">앞 단계가 끝나야 다음 단계</text>
+<rect x="1142" y="476" width="246" height="28" rx="14" fill="#FFFFFF" stroke="#AFA9EC" stroke-width="1"/>
+<text x="1156" y="494" font-size="11.5" fill="#534AB7">실제 제품 · Cloudera CDE (Spark · Airflow)</text>
+<path d="M1416 344 H1442 V333 L1464 355 L1442 377 V366 H1416 Z" fill="#D3D1C7"/>
+<rect x="1470" y="190" width="290" height="330" rx="16" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.2"/>
+<circle cx="1508" cy="228" r="17" fill="#854F0B"/>
+<text x="1508" y="234" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="1536" y="236" font-size="21" font-weight="600" fill="#412402">찾아 쓰기</text>
+<text x="1492" y="270" font-size="13.5" fill="#854F0B">어디에 있든 한 창구에서</text>
+<text x="1492" y="290" font-size="13.5" fill="#854F0B">물어봅니다</text>
+<line x1="1492" y1="306" x2="1738" y2="306" stroke="#EF9F27" stroke-width="1"/>
+<circle cx="1496" cy="328" r="3" fill="#854F0B"/>
+<text x="1508" y="333" font-size="13.5" fill="#633806">창고 + 원천을 하나의 창구로</text>
+<circle cx="1496" cy="355" r="3" fill="#854F0B"/>
+<text x="1508" y="360" font-size="13.5" fill="#633806">SQL 한 번에 여러 저장소 조회</text>
+<circle cx="1496" cy="382" r="3" fill="#854F0B"/>
+<text x="1508" y="387" font-size="13.5" fill="#633806">누가 무엇을 볼 수 있는지 통제</text>
+<circle cx="1496" cy="409" r="3" fill="#854F0B"/>
+<text x="1508" y="414" font-size="13.5" fill="#633806">말로 물으면 SQL로 바꿔 줌</text>
+<rect x="1492" y="476" width="246" height="28" rx="14" fill="#FFFFFF" stroke="#EF9F27" stroke-width="1"/>
+<text x="1506" y="494" font-size="11.5" fill="#854F0B">실제 제품 · Starburst Trino</text>
+<path d="M1766 344 H1792 V333 L1814 355 L1792 377 V366 H1766 Z" fill="#D3D1C7"/>
+<rect x="1820" y="190" width="290" height="330" rx="16" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.2"/>
+<circle cx="1858" cy="228" r="17" fill="#3B6D11"/>
+<text x="1858" y="234" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">6</text>
+<text x="1886" y="236" font-size="21" font-weight="600" fill="#173404">활용하기</text>
+<text x="1842" y="270" font-size="13.5" fill="#3B6D11">사람과 AI가</text>
+<text x="1842" y="290" font-size="13.5" fill="#3B6D11">답을 얻는 곳입니다</text>
+<line x1="1842" y1="306" x2="2088" y2="306" stroke="#97C459" stroke-width="1"/>
+<circle cx="1846" cy="328" r="3" fill="#3B6D11"/>
+<text x="1858" y="333" font-size="13.5" fill="#27500A">대시보드 · 리포트</text>
+<circle cx="1846" cy="355" r="3" fill="#3B6D11"/>
+<text x="1858" y="360" font-size="13.5" fill="#27500A">분석가의 노트북 · SQL</text>
+<circle cx="1846" cy="382" r="3" fill="#3B6D11"/>
+<text x="1858" y="387" font-size="13.5" fill="#27500A">AI 비서에게 말로 질문</text>
+<circle cx="1846" cy="409" r="3" fill="#3B6D11"/>
+<text x="1858" y="414" font-size="13.5" fill="#27500A">→ 아래 'AI 비서' 흐름 참고</text>
+<rect x="1842" y="476" width="246" height="28" rx="14" fill="#FFFFFF" stroke="#97C459" stroke-width="1"/>
+<text x="1856" y="494" font-size="11.5" fill="#3B6D11">실제 제품 · Spotfire · Cloudera AI · AI Agent</text>
+<line x1="70" y1="544" x2="2110" y2="544" stroke="#D3D1C7" stroke-width="1"/>
+<text x="70" y="584" font-size="19" font-weight="600" fill="#2C2C2A">AI 비서(Agent)는 어떻게 답을 찾나요?</text>
+<rect x="80" y="610" width="440" height="250" rx="16" fill="#F3F1DC" stroke="#6B6414" stroke-width="1.2"/>
+<circle cx="118" cy="648" r="17" fill="#6B6414"/>
+<text x="118" y="654" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="146" y="656" font-size="21" font-weight="600" fill="#2C2A05">참고 자료 준비</text>
+<text x="102" y="690" font-size="13.5" fill="#6B6414">AI가 볼 자료를 미리 정리해 둡니다</text>
+<line x1="102" y1="706" x2="498" y2="706" stroke="#CFC760" stroke-width="1"/>
+<circle cx="106" cy="728" r="3" fill="#6B6414"/>
+<text x="118" y="733" font-size="13.5" fill="#4A4509">데이터 사전 — 어떤 데이터가 어디에, 무슨 뜻인지</text>
+<circle cx="106" cy="755" r="3" fill="#6B6414"/>
+<text x="118" y="760" font-size="13.5" fill="#4A4509">문서 검색 준비 — 약관·규정을 잘게 나눠 의미로 찾게</text>
+<circle cx="106" cy="782" r="3" fill="#6B6414"/>
+<text x="118" y="787" font-size="13.5" fill="#4A4509">나눈 문서 조각을 검색용 저장소에 보관</text>
+<rect x="102" y="816" width="396" height="28" rx="14" fill="#FFFFFF" stroke="#CFC760" stroke-width="1"/>
+<text x="116" y="834" font-size="11.5" fill="#6B6414">실제 제품 · Argus Catalog · Argus RAG Studio · Vector DB</text>
+<path d="M526 724 H552 V713 L574 735 L552 757 V746 H526 Z" fill="#D3D1C7"/>
+<rect x="580" y="610" width="440" height="250" rx="16" fill="#FBEBF0" stroke="#9B2D4F" stroke-width="1.2"/>
+<circle cx="618" cy="648" r="17" fill="#9B2D4F"/>
+<text x="618" y="654" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="646" y="656" font-size="21" font-weight="600" fill="#450F21">AI 비서가 근거 찾기</text>
+<text x="602" y="690" font-size="13.5" fill="#9B2D4F">질문을 이해하고 필요한 자료를 모읍니다</text>
+<line x1="602" y1="706" x2="998" y2="706" stroke="#E294AC" stroke-width="1"/>
+<circle cx="606" cy="728" r="3" fill="#9B2D4F"/>
+<text x="618" y="733" font-size="13.5" fill="#6E1F38">관련 문서 조각 찾기 (RAG)</text>
+<circle cx="606" cy="755" r="3" fill="#9B2D4F"/>
+<text x="618" y="760" font-size="13.5" fill="#6E1F38">데이터 창구(⑤)에 SQL로 수치 조회</text>
+<circle cx="606" cy="782" r="3" fill="#9B2D4F"/>
+<text x="618" y="787" font-size="13.5" fill="#6E1F38">질문한 사람의 권한 범위 안에서만</text>
+<rect x="602" y="816" width="396" height="28" rx="14" fill="#FFFFFF" stroke="#E294AC" stroke-width="1"/>
+<text x="616" y="834" font-size="11.5" fill="#9B2D4F">실제 제품 · 고객 AI Agent (MCP 도구)</text>
+<path d="M1026 724 H1052 V713 L1074 735 L1052 757 V746 H1026 Z" fill="#D3D1C7"/>
+<rect x="1080" y="610" width="440" height="250" rx="16" fill="#E2F1F7" stroke="#0C6480" stroke-width="1.2"/>
+<circle cx="1118" cy="648" r="17" fill="#0C6480"/>
+<text x="1118" y="654" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="1146" y="656" font-size="21" font-weight="600" fill="#04303F">사내 AI 모델이 답 쓰기</text>
+<text x="1102" y="690" font-size="13.5" fill="#0C6480">모은 근거로 답변을 만듭니다</text>
+<line x1="1102" y1="706" x2="1498" y2="706" stroke="#63B4CE" stroke-width="1"/>
+<circle cx="1106" cy="728" r="3" fill="#0C6480"/>
+<text x="1118" y="733" font-size="13.5" fill="#08495E">회사 안에서 돌아가는 모델 — 외부로 보내지 않음</text>
+<circle cx="1106" cy="755" r="3" fill="#0C6480"/>
+<text x="1118" y="760" font-size="13.5" fill="#08495E">답변 작성 · 요약 · SQL 생성 · 문서 이해</text>
+<circle cx="1106" cy="782" r="3" fill="#0C6480"/>
+<text x="1118" y="787" font-size="13.5" fill="#08495E">한국어 모델을 회사가 직접 보유</text>
+<rect x="1102" y="816" width="396" height="28" rx="14" fill="#FFFFFF" stroke="#63B4CE" stroke-width="1"/>
+<text x="1116" y="834" font-size="11.5" fill="#0C6480">실제 제품 · Cloudera AI Inference (OpenAI 호환)</text>
+<path d="M1526 724 H1552 V713 L1574 735 L1552 757 V746 H1526 Z" fill="#D3D1C7"/>
+<rect x="1580" y="610" width="440" height="250" rx="16" fill="#E9EEF2" stroke="#3E5D72" stroke-width="1.2"/>
+<circle cx="1618" cy="648" r="17" fill="#3E5D72"/>
+<text x="1618" y="654" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="1646" y="656" font-size="21" font-weight="600" fill="#12242E">답변과 기록</text>
+<text x="1602" y="690" font-size="13.5" fill="#3E5D72">사람에게 답을 주고 과정을 남깁니다</text>
+<line x1="1602" y1="706" x2="1998" y2="706" stroke="#9BB3C2" stroke-width="1"/>
+<circle cx="1606" cy="728" r="3" fill="#3E5D72"/>
+<text x="1618" y="733" font-size="13.5" fill="#26414F">답 + 근거 문서 + 사용한 SQL을 함께 제시</text>
+<circle cx="1606" cy="755" r="3" fill="#3E5D72"/>
+<text x="1618" y="760" font-size="13.5" fill="#26414F">질문 → 근거 → 답변 전 과정을 감사 기록</text>
+<circle cx="1606" cy="782" r="3" fill="#3E5D72"/>
+<text x="1618" y="787" font-size="13.5" fill="#26414F">잘못된 답은 피드백으로 개선</text>
+<rect x="1602" y="816" width="396" height="28" rx="14" fill="#FFFFFF" stroke="#9BB3C2" stroke-width="1"/>
+<text x="1616" y="834" font-size="11.5" fill="#3E5D72">실제 제품 · 감사 로그 · 피드백</text>
+<text x="40" y="938" font-size="12" fill="#888780">위 줄의 ③ 창고에 보관한 문서와 ⑤ 창구의 데이터를 아래 줄의 AI 비서가 함께 사용합니다.   ·   화살표 = 데이터·정보가 넘어가는 방향</text>
+</svg>

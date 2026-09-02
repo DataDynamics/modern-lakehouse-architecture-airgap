@@ -5,10 +5,13 @@
 
 ![Lakehouse Reference Architecture](assets/lakehouse-architecture-lr.svg)
 
+처음 보는 분을 위한 개념도는 [아래](#개념도-초보자용)에 따로 있습니다.
+
 ## 목차
 
 - [구성](#구성)
 - [아키텍처 개요](#아키텍처-개요)
+- [개념도 (초보자용)](#개념도-초보자용)
 - [다이어그램 재생성](#다이어그램-재생성)
   - [PNG 렌더러](#png-렌더러)
 - [폰트](#폰트)
@@ -22,8 +25,10 @@
 ```
 .
 ├── assets/
-│   ├── lakehouse-architecture-lr.svg     다이어그램 SVG (빌드 산출물)
-│   └── lakehouse-architecture-lr.png     다이어그램 PNG (빌드 산출물)
+│   ├── lakehouse-architecture-lr.svg     상세도 SVG (빌드 산출물)
+│   ├── lakehouse-architecture-lr.png     상세도 PNG (빌드 산출물)
+│   ├── lakehouse-concept.svg             초보자용 개념도 SVG (빌드 산출물)
+│   └── lakehouse-concept.png             초보자용 개념도 PNG (빌드 산출물)
 ├── docs/
 │   ├── architecture.md                   Layer별 설명과 경로 설계 근거
 │   ├── architecture-rationale.md         제안 아키텍처의 특징과 선택 근거
@@ -32,7 +37,8 @@
 │   ├── solution-runtimes.md              솔루션별 동작 환경과 배포 방식
 │   └── agent-readiness-analysis.md       Agent 대상 데이터 제공 요건 분석
 └── scripts/
-    └── generate_architecture_svg.py      다이어그램 생성 스크립트
+    ├── generate_architecture_svg.py      상세도 생성 스크립트
+    └── generate_concept_svg.py           개념도 생성 스크립트 (상세도의 팔레트·렌더러 공유)
 ```
 
 ## 아키텍처 개요
@@ -62,6 +68,22 @@
 목록은 [docs/solution-features.md](docs/solution-features.md), 동작 환경과 배포 방식은
 [docs/solution-runtimes.md](docs/solution-runtimes.md)를 참고하십시오.
 
+## 개념도 (초보자용)
+
+위 상세도는 엔지니어를 위한 그림입니다. 데이터 플랫폼을 처음 접하는 분께는 같은
+아키텍처를 일상어로 풀어 쓴 개념도를 권합니다.
+
+![Lakehouse Concept](assets/lakehouse-concept.svg)
+
+- **위 줄** — 데이터가 생겨서 쓰이기까지의 6단계. 상세도의 Layer 1~7에 대응합니다
+- **아래 줄** — AI 비서(Agent)가 질문에 답을 찾는 4단계. 상세도의 Argus Catalog ·
+  Argus RAG Studio · Vector DB · 모델 서빙 · AI Agent에 대응합니다
+- 각 카드 하단의 "실제 제품"이 상세도의 상자 이름과 연결됩니다
+
+```bash
+python scripts/generate_concept_svg.py
+```
+
 ## 다이어그램 재생성
 
 Python 3.10 이상이 필요합니다. SVG 생성 자체에는 외부 의존성이 없고, PNG 래스터화에만
@@ -77,6 +99,9 @@ SVG와 PNG가 항상 함께 생성됩니다.
 assets/lakehouse-architecture-lr.svg    벡터 (문서 삽입 · 확대)
 assets/lakehouse-architecture-lr.png    래스터 4360 x 3340 (발표자료 · 이슈 첨부)
 ```
+
+개념도는 `scripts/generate_concept_svg.py` 로 따로 생성하며 옵션은 같습니다
+(`assets/lakehouse-concept.svg` · `.png` 4360 x 1920).
 
 | 옵션 | 설명 |
 |---|---|
